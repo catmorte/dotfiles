@@ -6,4 +6,5 @@ docker + lazydocker
 bottom & glances
 k9s
 httpie
+go + gotests
 ```
