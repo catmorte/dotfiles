@@ -7,4 +7,5 @@ bottom & glances
 k9s
 httpie
 go + gotests
+lf
 ```
