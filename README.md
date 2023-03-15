@@ -1,4 +1,5 @@
 ```
+oh-my-posh
 ripgrep
 nvim + astronvim
 git + lazygit
@@ -8,4 +9,5 @@ k9s
 httpie
 go + gotests
 lf
+wuzz
 ```
