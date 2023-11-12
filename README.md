@@ -1,13 +1,17 @@
 ```
-oh-my-posh
+zsh,oh-my-zsh(oh-my-posh)
 ripgrep
+fzf
+tmux
 nvim + astronvim
 git + lazygit
 docker + lazydocker
 bottom & glances
 k9s
-httpie
 go + gotests
 lf
-wuzz
+nodejs
+golang
+starship
+kitty
 ```
