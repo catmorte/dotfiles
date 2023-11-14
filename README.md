@@ -1,5 +1,7 @@
 ```
 zsh,oh-my-zsh(oh-my-posh)
+tldr
+btop
 ripgrep
 fzf
 tmux
