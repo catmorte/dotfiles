@@ -2,6 +2,7 @@
 zsh,oh-my-zsh(oh-my-posh)
 tldr
 btop
+gdu
 ripgrep
 fzf
 tmux
