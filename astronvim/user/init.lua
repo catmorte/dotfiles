@@ -1,13 +1,25 @@
 return {
+  mappings = {
+    -- first key is the mode
+    n = {
+      ["<leader>gt"] = {
+        "<cmd>ToggleBlame<cr>",
+        desc = "Toggle blame",
+      },
+    },
+  },
   updater = {
     channel = "stable",
   },
   polish = function()
     vim.cmd "colorscheme dracula"
-    -- vim.cmd("colorscheme gruvbox-flat")
+    --     vim.cmd("colorscheme gruvbox-flat")
     -- vim.g.gruvbox_flat_style = "hard"
+
+    -- vim.cmd("highlight Normal ctermbg=NONE guibg=NONE")
     vim.cmd "set guicursor=i:ver1"
     vim.cmd "set guicursor+=a:blinkon1"
+    vim.api.nvim_create_user_command("ToggleBlame", function(args) require("blame").toggle "*" end, { nargs = "*" })
   end,
 
   highlights = {
@@ -60,11 +72,12 @@ return {
         },
         {
           type = "delve",
-          name = "Debug test", 
+          name = "Debug test", -- configuration for debugging test files
           request = "launch",
           mode = "test",
           program = "${file}",
         },
+        -- works with go.mod packages and sub packages
         {
           type = "delve",
           name = "Debug test (go.mod)",
@@ -98,6 +111,7 @@ return {
         filetypes = { "c", "cpp" },
       },
       dartls = {
+        -- any changes you want to make to the LSP setup, for example
         color = {
           enabled = true,
         },
@@ -136,10 +150,6 @@ return {
       end,
     },
     "Mofiqul/dracula.nvim",
-     "projekt0n/github-nvim-theme",
-    "Mofiqul/dracula.nvim",
-    "akinsho/flutter-tools.nvim",
-    "AstroNvim/astrocommunity",
     "rebelot/kanagawa.nvim",
     {
       "eddyekofo94/gruvbox-flat.nvim",
@@ -147,9 +157,15 @@ return {
       enabled = true,
       config = function() vim.cmd [[colorscheme gruvbox-flat]] end,
     },
+    "projekt0n/github-nvim-theme",
+    "Mofiqul/dracula.nvim",
+    "akinsho/flutter-tools.nvim", -- add lsp plugin
+    "AstroNvim/astrocommunity",
+
     { import = "astrocommunity.colorscheme.nightfox-nvim", enabled = true },
     { import = "astrocommunity.colorscheme.kanagawa-nvim", enabled = true },
     { import = "astrocommunity.colorscheme.rose-pine" },
+
     { import = "astrocommunity.colorscheme.catppuccin" },
     {
       "catppuccin/nvim",
@@ -163,8 +179,39 @@ return {
         }
       end,
     },
+    "FabijanZulj/blame.nvim",
+    {
+      "elixir-tools/elixir-tools.nvim",
+      version = "*",
+      event = { "BufReadPre", "BufNewFile" },
+      config = function()
+        local elixir = require "elixir"
+        local elixirls = require "elixir.elixirls"
+
+        elixir.setup {
+          nextls = { enable = true },
+          credo = {},
+          elixirls = {
+            enable = true,
+            settings = elixirls.settings {
+              dialyzerEnabled = false,
+              enableTestLenses = false,
+            },
+            on_attach = function(client, bufnr)
+              vim.keymap.set("n", "<space>fp", ":ElixirFromPipe<cr>", { buffer = true, noremap = true })
+              vim.keymap.set("n", "<space>tp", ":ElixirToPipe<cr>", { buffer = true, noremap = true })
+              vim.keymap.set("v", "<space>em", ":ElixirExpandMacro<cr>", { buffer = true, noremap = true })
+            end,
+          },
+        }
+      end,
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+      },
+    },
+
     { import = "astrocommunity.completion.copilot-lua" },
-    { 
+    { -- further customize the options set by the community
       "copilot.lua",
       opts = {
         suggestion = {
