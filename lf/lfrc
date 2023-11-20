@@ -47,6 +47,7 @@ map x cut
 map a :push %touch<space>
 map zm $tmux split-window -h -c $PWD
 map gh cd ~
+map gc cd ~/.config/
 map gp cd ~/projects/
 map gD cd ~/Downloads/
 map gs :fzf_search
