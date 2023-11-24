@@ -17,4 +17,5 @@ nodejs
 golang
 starship
 kitty
+rclone
 ```
