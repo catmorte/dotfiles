@@ -1,10 +1,87 @@
+local prefix = "<leader>r"
+local utils = require "astronvim.utils"
+
 return {
+  heirline = {
+    -- define the separators between each section
+    separators = {
+      left = { "", " " }, -- separator for the left side of the statusline
+      right = { " █", "" }, -- separator for the right side of the statusline
+      tab = { "", "" },
+    },
+    -- add new colors that can be used by heirline
+    colors = function(hl)
+      local get_hlgroup = require("astronvim.utils").get_hlgroup
+      -- use helper function to get highlight group properties
+      local comment_fg = get_hlgroup("Comment").fg
+      hl.git_branch_fg = comment_fg
+      hl.git_added = comment_fg
+      hl.git_changed = comment_fg
+      hl.git_removed = comment_fg
+      hl.blank_bg = get_hlgroup("Folded").fg
+      hl.file_info_bg = get_hlgroup("Visual").bg
+      hl.nav_icon_bg = get_hlgroup("String").fg
+      hl.nav_fg = hl.nav_icon_bg
+      hl.folder_icon_bg = get_hlgroup("Error").fg
+      return hl
+    end,
+    attributes = {
+      mode = { bold = true },
+    },
+    icon_highlights = {
+      file_icon = {
+        statusline = false,
+      },
+    },
+  },
+  icons = {
+    VimIcon = "",
+    ScrollText = "",
+    GitBranch = "",
+    GitAdd = "",
+    GitChange = "",
+    GitDelete = "",
+  },
+
   mappings = {
     -- first key is the mode
     n = {
       ["<leader>gt"] = {
         "<cmd>ToggleBlame<cr>",
         desc = "Toggle blame",
+      },
+
+      ["<leader>gf"] = {
+        "<cmd>OpenInGHFileLines<cr>",
+        desc = "Open GH on Line",
+      },
+      ["<leader>gF"] = {
+        "<cmd>OpenInGHFile<cr>",
+        desc = "Open GH File",
+      },
+      ["<leader>gR"] = {
+        "<cmd>OpenInGHRepo<cr>",
+        desc = "Open GH Repo",
+      },
+
+      ["<leader>j"] = {
+        desc = "JQ",
+      },
+      ["<leader>jl"] = {
+        "<cmd>JqxList<cr>",
+        desc = "JQ list",
+      },
+      ["<leader>jq"] = {
+        "<cmd>JqxQuery<cr>",
+        desc = "JQ query",
+      },
+      ["<leader>tr"] = {
+        "<cmd>OverseerRunCmd<cr>",
+        desc = "Overseer run cmd",
+      },
+      ["<leader>to"] = {
+        "<cmd>OverseerToggle<cr>",
+        desc = "Overseer toggle",
       },
     },
   },
@@ -150,6 +227,12 @@ return {
       end,
     },
     "Mofiqul/dracula.nvim",
+    "projekt0n/github-nvim-theme",
+    "Mofiqul/dracula.nvim",
+    "akinsho/flutter-tools.nvim", -- add lsp plugin
+    "AstroNvim/astrocommunity",
+    "FabijanZulj/blame.nvim",
+    { "almo7aya/openingh.nvim", cmd = { "OpenInGHRepo", "OpenInGHFile", "OpenInGHFileLines" } },
     "rebelot/kanagawa.nvim",
     {
       "eddyekofo94/gruvbox-flat.nvim",
@@ -157,10 +240,6 @@ return {
       enabled = true,
       config = function() vim.cmd [[colorscheme gruvbox-flat]] end,
     },
-    "projekt0n/github-nvim-theme",
-    "Mofiqul/dracula.nvim",
-    "akinsho/flutter-tools.nvim", -- add lsp plugin
-    "AstroNvim/astrocommunity",
 
     { import = "astrocommunity.colorscheme.nightfox-nvim", enabled = true },
     { import = "astrocommunity.colorscheme.kanagawa-nvim", enabled = true },
@@ -179,7 +258,6 @@ return {
         }
       end,
     },
-    "FabijanZulj/blame.nvim",
     {
       "elixir-tools/elixir-tools.nvim",
       version = "*",
@@ -224,6 +302,324 @@ return {
             dismiss = "<C/>",
           },
         },
+      },
+    },
+    {
+      "lukas-reineke/headlines.nvim",
+      opts = function()
+        local opts = {}
+        for _, ft in ipairs { "markdown", "norg", "rmd", "org" } do
+          opts[ft] = {
+            headline_highlights = {},
+          }
+          for i = 1, 6 do
+            local hl = "Headline" .. i
+            vim.api.nvim_set_hl(0, hl, { link = "Headline", default = true })
+            table.insert(opts[ft].headline_highlights, hl)
+          end
+        end
+        return opts
+      end,
+      ft = { "markdown", "norg", "rmd", "org" },
+      config = function(_, opts)
+        -- PERF: schedule to prevent headlines slowing down opening a file
+        vim.schedule(function()
+          require("headlines").setup(opts)
+          require("headlines").refresh()
+        end)
+      end,
+    },
+    {
+      "levouh/tint.nvim",
+      event = "User AstroFile",
+      opts = {
+        highlight_ignore_patterns = { "WinSeparator", "neo-tree", "Status.*" },
+        tint = -45, -- Darken colors, use a positive value to brighten
+        saturation = 0.6, -- Saturation to preserve
+      },
+    },
+    {
+      "antonk52/bad-practices.nvim",
+      opts = {},
+    },
+    {
+      "rebelot/heirline.nvim",
+      opts = function(_, opts)
+        local status = require "astronvim.utils.status"
+        opts.statusline = { -- statusline
+          hl = { fg = "fg", bg = "bg" },
+          status.component.mode { mode_text = { padding = { left = 1, right = 1 } } }, -- add the mode text
+          status.component.git_branch(),
+          status.component.file_info { filetype = {}, filename = false, file_modified = false },
+          status.component.git_diff(),
+          status.component.diagnostics(),
+          status.component.fill(),
+          status.component.cmd_info(),
+          status.component.fill(),
+          status.component.lsp(),
+          status.component.treesitter(),
+          status.component.nav(),
+          -- remove the 2nd mode indicator on the right
+        }
+
+        -- return the final configuration table
+        return opts
+      end,
+    },
+    {
+      "gennaro-tedesco/nvim-jqx",
+      cmd = {
+        "JqxQuery",
+        "JqxList",
+      },
+      ft = { "json", "yaml" },
+    },
+    {
+      "rest-nvim/rest.nvim",
+      ft = { "http", "json" },
+      cmd = {
+        "RestNvim",
+        "RestNvimPreview",
+        "RestNvimLast",
+      },
+      dependencies = { "nvim-lua/plenary.nvim" },
+
+      keys = {
+        { prefix, desc = "RestNvim" },
+        { prefix .. "r", "<Plug>RestNvim", desc = "Run request" },
+      },
+      opts = {},
+    },
+    {
+      "nvim-treesitter/nvim-treesitter",
+      opts = function(_, opts)
+        if opts.ensure_installed ~= "all" then
+          opts.ensure_installed = utils.list_insert_unique(opts.ensure_installed, { "http", "json" })
+        end
+      end,
+    },
+    {
+      "stevearc/overseer.nvim",
+      cmd = {
+        "OverseerOpen",
+        "OverseerClose",
+        "OverseerToggle",
+        "OverseerSaveBundle",
+        "OverseerLoadBundle",
+        "OverseerDeleteBundle",
+        "OverseerRunCmd",
+        "OverseerRun",
+        "OverseerInfo",
+        "OverseerBuild",
+        "OverseerQuickAction",
+        "OverseerTaskAction ",
+        "OverseerClearCache",
+      },
+      opts = {},
+    },
+    {
+      "catppuccin/nvim",
+      optional = true,
+      opts = { integrations = { overseer = true } },
+    },
+    {
+      "kevinhwang91/nvim-hlslens",
+      opts = {},
+      event = "BufRead",
+      init = function() vim.on_key(nil, vim.api.nvim_get_namespaces()["auto_hlsearch"]) end,
+    },
+    {
+      "wfxr/minimap.vim",
+      -- event = "User AstroFile",
+      cmd = { "Minimap", "MinimapClose", "MinimapToggle", "MinimapRefresh", "MinimapUpdateHighlight" },
+      keys = {
+        { "<leader>um", "<cmd>MinimapToggle<CR>", desc = "Toggle minimap", mode = { "n" } },
+      },
+      init = function()
+        vim.g.minimap_width = 10
+        vim.g.minimap_auto_start = 1
+        vim.g.minimap_auto_start_win_enter = 1
+        vim.g.minimap_block_filetypes = {
+          "fugitive",
+          "nerdtree",
+          "tagbar",
+          "fzf",
+          "qf",
+          "netrw",
+          "NvimTree",
+          "lazy",
+          "mason",
+          "prompt",
+          "TelescopePrompt",
+          "noice",
+          "notify",
+          "neo-tree",
+        }
+        vim.g.minimap_highlight_search = 1
+        vim.g.minimap_git_colors = 1
+      end,
+    },
+
+    {
+      "rebelot/heirline.nvim",
+      opts = function(_, opts)
+        local status = require "astronvim.utils.status"
+        opts.statusline = {
+          -- default highlight for the entire statusline
+          hl = { fg = "fg", bg = "bg" },
+          -- each element following is a component in astronvim.utils.status module
+
+          -- add the vim mode component
+          status.component.mode {
+            -- enable mode text with padding as well as an icon before it
+            mode_text = { icon = { kind = "VimIcon", padding = { right = 1, left = 1 } } },
+            -- surround the component with a separators
+            surround = {
+              -- it's a left element, so use the left separator
+              separator = "left",
+              -- set the color of the surrounding based on the current mode using astronvim.utils.status module
+              color = function() return { main = status.hl.mode_bg(), right = "blank_bg" } end,
+            },
+          },
+          -- we want an empty space here so we can use the component builder to make a new section with just an empty string
+          status.component.builder {
+            { provider = "" },
+            -- define the surrounding separator and colors to be used inside of the component
+            -- and the color to the right of the separated out section
+            surround = { separator = "left", color = { main = "blank_bg", right = "file_info_bg" } },
+          },
+          -- add a section for the currently opened file information
+          status.component.file_info {
+            -- enable the file_icon and disable the highlighting based on filetype
+            file_icon = { padding = { left = 0 } },
+            filename = { fallback = "Empty" },
+            -- add padding
+            padding = { right = 1 },
+            -- define the section separator
+            surround = { separator = "left", condition = false },
+          },
+          -- add a component for the current git branch if it exists and use no separator for the sections
+          status.component.git_branch { surround = { separator = "none" } },
+          -- add a component for the current git diff if it exists and use no separator for the sections
+          status.component.git_diff { padding = { left = 1 }, surround = { separator = "none" } },
+          -- fill the rest of the statusline
+          -- the elements after this will appear in the middle of the statusline
+          status.component.fill(),
+          -- add a component to display if the LSP is loading, disable showing running client names, and use no separator
+          status.component.lsp { lsp_client_names = false, surround = { separator = "none", color = "bg" } },
+          -- fill the rest of the statusline
+          -- the elements after this will appear on the right of the statusline
+          status.component.fill(),
+          -- add a component for the current diagnostics if it exists and use the right separator for the section
+          status.component.diagnostics { surround = { separator = "right" } },
+          -- add a component to display LSP clients, disable showing LSP progress, and use the right separator
+          status.component.lsp { lsp_progress = false, surround = { separator = "right" } },
+          -- NvChad has some nice icons to go along with information, so we can create a parent component to do this
+          -- all of the children of this table will be treated together as a single component
+          {
+            -- define a simple component where the provider is just a folder icon
+            status.component.builder {
+              -- astronvim.get_icon gets the user interface icon for a closed folder with a space after it
+              { provider = require("astronvim.utils").get_icon "FolderClosed" },
+              -- add padding after icon
+              padding = { right = 1 },
+              -- set the foreground color to be used for the icon
+              hl = { fg = "bg" },
+              -- use the right separator and define the background color
+              surround = { separator = "right", color = "folder_icon_bg" },
+            },
+            -- add a file information component and only show the current working directory name
+            status.component.file_info {
+              -- we only want filename to be used and we can change the fname
+              -- function to get the current working directory name
+              filename = { fname = function(nr) return vim.fn.getcwd(nr) end, padding = { left = 1 } },
+              -- disable all other elements of the file_info component
+              file_icon = false,
+              file_modified = false,
+              file_read_only = false,
+              -- use no separator for this part but define a background color
+              surround = { separator = "none", color = "file_info_bg", condition = false },
+            },
+          },
+          -- the final component of the NvChad statusline is the navigation section
+          -- this is very similar to the previous current working directory section with the icon
+          { -- make nav section with icon border
+            -- define a custom component with just a file icon
+            status.component.builder {
+              { provider = require("astronvim.utils").get_icon "ScrollText" },
+              -- add padding after icon
+              padding = { right = 1 },
+              -- set the icon foreground
+              hl = { fg = "bg" },
+              -- use the right separator and define the background color
+              -- as well as the color to the left of the separator
+              surround = { separator = "right", color = { main = "nav_icon_bg", left = "file_info_bg" } },
+            },
+            -- add a navigation component and just display the percentage of progress in the file
+            status.component.nav {
+              -- add some padding for the percentage provider
+              percentage = { padding = { right = 1 } },
+              -- disable all other providers
+              ruler = false,
+              scrollbar = false,
+              -- use no separator and define the background color
+              surround = { separator = "none", color = "file_info_bg" },
+            },
+          },
+        }
+
+        -- return the final options table
+        return opts
+      end,
+    },
+
+    { -- override nvim-cmp plugin
+      "hrsh7th/nvim-cmp",
+      keys = { ":", "/", "?" }, -- lazy load cmp on more keys along with insert mode
+      dependencies = {
+        "hrsh7th/cmp-cmdline", -- add cmp-cmdline as dependency of cmp
+      },
+      config = function(plugin, opts)
+        local cmp = require "cmp"
+        -- run cmp setup
+        cmp.setup(opts)
+
+        -- configure `cmp-cmdline` as described in their repo: https://github.com/hrsh7th/cmp-cmdline#setup
+        cmp.setup.cmdline("/", {
+          mapping = cmp.mapping.preset.cmdline(),
+          sources = {
+            { name = "buffer" },
+          },
+        })
+        cmp.setup.cmdline(":", {
+          mapping = cmp.mapping.preset.cmdline(),
+          sources = cmp.config.sources({
+            { name = "path" },
+          }, {
+            {
+              name = "cmdline",
+              option = {
+                ignore_cmds = { "Man", "!" },
+              },
+            },
+          }),
+        })
+      end,
+    },
+
+    {
+      "folke/noice.nvim",
+      event = "VeryLazy",
+      opts = {
+        -- add any options here
+      },
+      dependencies = {
+        -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
+        "MunifTanjim/nui.nvim",
+        -- OPTIONAL:
+        --   `nvim-notify` is only needed, if you want to use the notification view.
+        --   If not available, we use `mini` as the fallback
+        "rcarriga/nvim-notify",
       },
     },
   },
