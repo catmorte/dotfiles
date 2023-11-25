@@ -292,6 +292,17 @@ return {
     { -- further customize the options set by the community
       "copilot.lua",
       opts = {
+        filetypes = {
+          lua = true,
+          javascript = true,
+          typescript = true,
+          golang = true,
+          go = true,
+          cpp = true,
+          sh = true,
+          ["*"] = false,
+        },
+
         suggestion = {
           keymap = {
             accept = "<C-l>",
