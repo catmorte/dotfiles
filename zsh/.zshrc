@@ -122,7 +122,10 @@ NEW_NOTE="/home/rssl/scripts/new_note.sh"
 if [ -f "$NEW_NOTE" ]; then
     source "$NEW_NOTE"
 fi
-
+SYNC_NOTES="/home/rssl/scripts/sync_notes.sh"
+if [ -f "$SYNC_NOTES" ]; then
+    source "$SYNC_NOTES"
+fi
 LFCD="/home/rssl/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
     source "$LFCD"
@@ -131,6 +134,7 @@ bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'new_note\n'
+bindkey -s '^w' 'sync_notes\n'
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 LF_ICONS=$(sed ~/.config/lf/icons \
