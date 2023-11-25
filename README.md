@@ -18,4 +18,5 @@ golang
 starship
 kitty
 rclone
+entr
 ```
