@@ -19,4 +19,5 @@ starship
 kitty
 rclone
 entr
+exa
 ```
