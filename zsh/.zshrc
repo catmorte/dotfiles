@@ -118,14 +118,15 @@ source $ZSH/oh-my-zsh.sh
     git clone --depth 1 -- \
         https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
 source ~/Repos/znap/znap.zsh  # Start Znap
-NEW_NOTE="/home/rssl/scripts/new_note.sh"
-if [ -f "$NEW_NOTE" ]; then
-    source "$NEW_NOTE"
-fi
 SYNC_NOTES="/home/rssl/scripts/sync_notes.sh"
 if [ -f "$SYNC_NOTES" ]; then
-    source "$SYNC_NOTES"
+    source "$SYNC_NOTES" --source-only
 fi
+NEW_NOTE="/home/rssl/scripts/new_note.sh"
+if [ -f "$NEW_NOTE" ]; then
+    source "$NEW_NOTE" --source-only
+fi
+
 LFCD="/home/rssl/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
     source "$LFCD"
