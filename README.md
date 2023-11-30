@@ -20,4 +20,5 @@ kitty
 rclone
 entr
 exa
+ntfy
 ```
