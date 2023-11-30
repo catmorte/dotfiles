@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 new_note() {
 	_zsh_highlight() {}
 	notes=~/notes
@@ -27,9 +27,13 @@ new_note() {
 	touch $fullapth
 	nvim $fullapth
 	if [[ $? -eq 0 ]]; then
-		echo "Syncing notes..."
-		rclone sync --progress ~/notes/ ggld_e:notes
+		nohup ./sync_notes.sh &
+		disown
 	else
 		rm $fullapth
 	fi
 }
+
+if [ "${1}" != "--source-only" ]; then
+	new_note "${@}"
+fi
