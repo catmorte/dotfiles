@@ -135,7 +135,8 @@ bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'new_note\n'
-bindkey -s '^w' 'sync_notes\n'
+bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh & disown\n'
+
 alias ls='exa --color=auto'
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
