@@ -21,13 +21,13 @@ new_note() {
 	echo "Enter note name: "
 	read note_name
 
-	folder=$notes/"$opt"/"$current_date"
+	folder=$notes/"$opt"/"$current_date"_"$current_time"_"$note_name"
 	mkdir -p $folder
-	fullapth=$folder/"$current_time"_"$note_name".md
+	fullapth=$folder/note.md
 	touch $fullapth
 	nvim $fullapth
 	if [[ $? -eq 0 ]]; then
-		nohup ./sync_notes.sh &
+		nohup ./sync_notes.sh >/dev/null 2>&1 &
 		disown
 	else
 		rm $fullapth
