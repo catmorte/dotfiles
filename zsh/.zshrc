@@ -126,6 +126,10 @@ NEW_NOTE="/home/rssl/scripts/new_note.sh"
 if [ -f "$NEW_NOTE" ]; then
     source "$NEW_NOTE" --source-only
 fi
+OPEN_NOTE="/home/rssl/scripts/open_note.sh"
+if [ -f "$OPEN_NOTE" ]; then
+    source "$OPEN_NOTE" --source-only
+fi
 
 LFCD="/home/rssl/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
@@ -135,6 +139,7 @@ bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'new_note\n'
+bindkey -s '^t' 'open_note\n'
 bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh >/dev/null 2>&1 & disown\n'
 
 alias ls='exa --color=auto'
