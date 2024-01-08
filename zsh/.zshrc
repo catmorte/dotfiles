@@ -139,7 +139,7 @@ bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'new_note\n'
-bindkey -s '^t' 'open_note\n'
+bindkey -s '^t' 'cd $(ls -d ~/notes/* | fzf)\n'
 bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh >/dev/null 2>&1 & disown\n'
 
 alias ls='exa --color=auto'
