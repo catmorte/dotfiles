@@ -21,4 +21,6 @@ rclone
 entr
 exa
 ntfy
+mkdocs
+jupyter-labs
 ```
