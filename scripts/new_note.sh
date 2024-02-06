@@ -1,7 +1,7 @@
 #!/bin/zsh
 new_note() {
     _zsh_highlight() {}
-    notes=~/notes
+    notes=~/notes/plain/docs/
     opt=$(ls $notes | fzf)
     if [[ "$?" -ne 0 ]]; then
         return
@@ -17,6 +17,11 @@ new_note() {
     mkdir -p $folder
     fullapth=$folder/note.md
     touch $fullapth
+    echo "# ${note_name}" >> $fullapth
+    echo "## ${current_date} ${current_time}" >> $fullapth
+    echo " " >> $fullapth
+    echo "\`\`\`text" >> $fullapth
+    echo "\`\`\`" >> $fullapth
     nvim $fullapth
     if [[ $? -eq 0 ]]; then
         nohup ./sync_notes.sh >/dev/null 2>&1 &
