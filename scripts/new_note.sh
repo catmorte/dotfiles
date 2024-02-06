@@ -22,7 +22,9 @@ new_note() {
     echo " " >> $fullapth
     echo "\`\`\`text" >> $fullapth
     echo "\`\`\`" >> $fullapth
-    nvim $fullapth
+
+    tmux neww bash -c "nvim $fullapth"
+
     if [[ $? -eq 0 ]]; then
         nohup ./sync_notes.sh >/dev/null 2>&1 &
         disown
