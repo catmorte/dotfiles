@@ -1,8 +1,8 @@
 #!/bin/zsh
 open_note() {
     _zsh_highlight() {}
-    notes=~/notes
-    opt=$(ls $notes | fzf)
+    notes=~/notes/plain/docs
+    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
@@ -19,4 +19,3 @@ open_note() {
 if [ "${1}" != "--source-only" ]; then
     open_note "${@}"
 fi
-
