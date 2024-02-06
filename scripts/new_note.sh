@@ -2,7 +2,7 @@
 new_note() {
     _zsh_highlight() {}
     notes=~/notes/plain/docs/
-    opt=$(ls $notes | fzf)
+    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
