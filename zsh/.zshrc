@@ -137,6 +137,7 @@ if [ -f "$LFCD" ]; then
 fi
 bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
+bindkey -s '^i' '/home/rssl/scripts/cheats.sh\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'new_note\n'
 bindkey -s '^h' 'cd ~\n'
