@@ -118,6 +118,22 @@ source $ZSH/oh-my-zsh.sh
     git clone --depth 1 -- \
         https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
 source ~/Repos/znap/znap.zsh  # Start Znap
+RUN_NOTE="/home/rssl/scripts/run_notes.sh"
+if [ -f "$RUN_NOTE" ]; then
+    source "$RUN_NOTE" --source-only
+fi
+RUN_SECRET="/home/rssl/scripts/run_secrets.sh"
+if [ -f "$RUN_SECRET" ]; then
+    source "$RUN_SECRET" --source-only
+fi
+READ_SECRET="/home/rssl/scripts/read_secret.sh"
+if [ -f "$READ_SECRET" ]; then
+    source "$READ_SECRET" --source-only
+fi
+ADD_SECRET="/home/rssl/scripts/add_secret.sh"
+if [ -f "$ADD_SECRET" ]; then
+    source "$ADD_SECRET" --source-only
+fi
 SYNC_NOTES="/home/rssl/scripts/sync_notes.sh"
 if [ -f "$SYNC_NOTES" ]; then
     source "$SYNC_NOTES" --source-only
@@ -130,18 +146,18 @@ OPEN_NOTE="/home/rssl/scripts/open_note.sh"
 if [ -f "$OPEN_NOTE" ]; then
     source "$OPEN_NOTE" --source-only
 fi
-
 LFCD="/home/rssl/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
     source "$LFCD"
 fi
+
 bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
 bindkey -s '^i' '/home/rssl/scripts/cheats.sh\n'
 bindkey -s '^a' 'tmux attach\n'
-bindkey -s '^n' 'new_note\n'
+bindkey -s '^n' 'run_notes\n'
+bindkey -s '^t' 'run_secrets\n'
 bindkey -s '^h' 'cd ~\n'
-bindkey -s '^t' 'cd $(ls -d ~/notes/* | fzf)\n'
 bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh >/dev/null 2>&1 & disown\n'
 
 alias ls='exa --color=auto'
