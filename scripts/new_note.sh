@@ -15,15 +15,15 @@ new_note() {
 
     folder=$notes/"$opt"/"$current_date"_"$current_time"_"$note_name"
     mkdir -p $folder
-    fullapth=$folder/note.md
+    fullapth="$folder"/note.md
     touch $fullapth
-    echo "# ${note_name}" >> $fullapth
-    echo "## ${current_date} ${current_time}" >> $fullapth
-    echo " " >> $fullapth
-    echo "\`\`\`text" >> $fullapth
-    echo "\`\`\`" >> $fullapth
+    echo "# ${note_name}" >> "$fullapth"
+    echo "## ${current_date} ${current_time}" >> "$fullapth"
+    echo " " >> "$fullapth"
+    echo "\`\`\`text" >> "$fullapth"
+    echo "\`\`\`" >> "$fullapth"
 
-    tmux neww bash -c "nvim $fullapth"
+    tmux neww bash -c "nvim '$fullapth'"
 
     if [[ $? -eq 0 ]]; then
         nohup ./sync_notes.sh >/dev/null 2>&1 &
