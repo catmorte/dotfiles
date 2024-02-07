@@ -12,8 +12,8 @@ open_note() {
         return
     fi
     folder=$notes/"$opt"/"$note_name"
-    fullapth=$folder/note.md
-    tmux neww bash -c "nvim $fullapth"
+    fullapth="$folder"/note.md
+    tmux neww bash -c "nvim '$fullapth'"
 }
 
 if [ "${1}" != "--source-only" ]; then
