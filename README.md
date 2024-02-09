@@ -23,4 +23,5 @@ exa
 ntfy
 mkdocs
 jupyter-labs
+dive
 ```
