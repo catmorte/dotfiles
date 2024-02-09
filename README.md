@@ -24,4 +24,5 @@ ntfy
 mkdocs
 jupyter-labs
 dive
+viddy
 ```
