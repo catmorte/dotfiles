@@ -118,6 +118,11 @@ source $ZSH/oh-my-zsh.sh
     git clone --depth 1 -- \
         https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
 source ~/Repos/znap/znap.zsh  # Start Znap
+SHOW_MAN="/home/rssl/scripts/fzf_man.sh"
+if [ -f "$SHOW_MAN" ]; then
+    source "$SHOW_MAN" --source-only
+fi
+
 RUN_NOTE="/home/rssl/scripts/run_notes.sh"
 if [ -f "$RUN_NOTE" ]; then
     source "$RUN_NOTE" --source-only
@@ -153,7 +158,7 @@ fi
 
 bindkey -s '^o' 'lfcd\n'
 bindkey -s '^e' 'nvim\n'
-bindkey -s '^i' '/home/rssl/scripts/cheats.sh\n'
+bindkey -s '^i' 'show_man\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'run_notes\n'
 bindkey -s '^t' 'run_secrets\n'
