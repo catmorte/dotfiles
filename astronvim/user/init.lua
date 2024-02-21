@@ -2,12 +2,29 @@ local prefix = "<leader>r"
 local utils = require "astronvim.utils"
 
 return {
+  polish = function()
+    -- vim.g.dracula_colorterm = 0
+    -- vim.cmd "colorscheme github_light_default"
+    -- vim.cmd "colorscheme nordic"
+    -- vim.cmd "colorscheme gruvbox-flat"
+    vim.cmd "colorscheme dracula"
+
+    vim.g.gruvbox_flat_style = "hard"
+    -- vim.opt.mouse = ""
+    -- vim.cmd("highlight Normal ctermbg=NONE guibg=NONE")
+    vim.cmd "set guicursor=i:ver1"
+    vim.cmd "set guicursor+=a:blinkon1"
+    vim.api.nvim_create_user_command("ToggleBlame", function(args) require("blame").toggle "*" end, { nargs = "*" })
+  end,
+
   heirline = {
     -- define the separators between each section
     separators = {
-      left = { "", " " }, -- separator for the left side of the statusline
-      right = { " █", "" }, -- separator for the right side of the statusline
-      tab = { "", "" },
+      -- left = { "", " " }, -- separator for the left side of the statusline
+      -- left = { "", " " }, -- separator for the left side of the statusline
+      -- right = { " █", "" }, -- separator for the right side of the statusline
+      -- right = { " ", "" }, -- separator for the right side of the statusline
+      -- tab = { "", "" },
     },
     -- add new colors that can be used by heirline
     colors = function(hl)
@@ -88,17 +105,6 @@ return {
   updater = {
     channel = "stable",
   },
-  polish = function()
-    vim.cmd "colorscheme dracula"
-    --     vim.cmd("colorscheme gruvbox-flat")
-    -- vim.g.gruvbox_flat_style = "hard"
-
-    -- vim.cmd("highlight Normal ctermbg=NONE guibg=NONE")
-    vim.cmd "set guicursor=i:ver1"
-    vim.cmd "set guicursor+=a:blinkon1"
-    vim.api.nvim_create_user_command("ToggleBlame", function(args) require("blame").toggle "*" end, { nargs = "*" })
-  end,
-
   highlights = {
     -- set highlights for all themes
     -- use a function override to let us use lua to retrieve colors from highlight group
@@ -175,6 +181,9 @@ return {
       dartls = function(_, opts) require("flutter-tools").setup { lsp = opts } end,
     },
     config = {
+      -- hover = {
+      --   enabled = false,
+      -- },
       clangd = {
         capabilities = {
           offsetEncoding = "utf-8",
@@ -226,9 +235,10 @@ return {
         opts.defaults.mappings.n["<Esc>"] = actions.close
       end,
     },
-    "Mofiqul/dracula.nvim",
-    "projekt0n/github-nvim-theme",
-    "Mofiqul/dracula.nvim",
+    -- { "dracula/vim", lazy = false },
+    { "Mofiqul/dracula.nvim", lazy = false },
+    { "projekt0n/github-nvim-theme", lazy = false, opts = { transparent = false } },
+    -- { "Mofiqul/dracula.nvim", lazy = false },
     "akinsho/flutter-tools.nvim", -- add lsp plugin
     "AstroNvim/astrocommunity",
     "FabijanZulj/blame.nvim",
@@ -237,17 +247,19 @@ return {
     {
       "eddyekofo94/gruvbox-flat.nvim",
       priority = 1000,
+      lazy = false,
       enabled = true,
       config = function() vim.cmd [[colorscheme gruvbox-flat]] end,
     },
 
-    { import = "astrocommunity.colorscheme.nightfox-nvim", enabled = true },
-    { import = "astrocommunity.colorscheme.kanagawa-nvim", enabled = true },
-    { import = "astrocommunity.colorscheme.rose-pine" },
+    { import = "astrocommunity.colorscheme.nightfox-nvim", lazy = false, enabled = true },
+    { import = "astrocommunity.colorscheme.kanagawa-nvim", lazy = false, enabled = true },
+    { import = "astrocommunity.colorscheme.rose-pine", lazy = false },
 
-    { import = "astrocommunity.colorscheme.catppuccin" },
+    { import = "astrocommunity.colorscheme.catppuccin", lazy = false },
     {
       "catppuccin/nvim",
+      lazy = false,
       as = "catppuccin",
       config = function()
         require("catppuccin").setup {
@@ -300,9 +312,11 @@ return {
           go = true,
           cpp = true,
           sh = true,
+          py = true,
+          python = true,
+          makefile = true,
           ["*"] = false,
         },
-
         suggestion = {
           keymap = {
             accept = "<C-l>",
@@ -346,7 +360,7 @@ return {
       opts = {
         highlight_ignore_patterns = { "WinSeparator", "neo-tree", "Status.*" },
         tint = -45, -- Darken colors, use a positive value to brighten
-        saturation = 0.6, -- Saturation to preserve
+        saturation = 0.8, -- Saturation to preserve
       },
     },
     {
@@ -431,6 +445,7 @@ return {
     {
       "catppuccin/nvim",
       optional = true,
+      lazy = false,
       opts = { integrations = { overseer = true } },
     },
     {
@@ -619,10 +634,24 @@ return {
     },
 
     {
+      "AlexvZyl/nordic.nvim",
+      lazy = false,
+      priority = 1000,
+      config = function() require("nordic").load() end,
+    },
+    {
       "folke/noice.nvim",
       event = "VeryLazy",
       opts = {
         -- add any options here
+        lsp = {
+          hover = {
+            enabled = false,
+          },
+          signature = {
+            enabled = false,
+          },
+        },
       },
       dependencies = {
         -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
