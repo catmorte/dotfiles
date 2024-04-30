@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+#     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# fi
+#
 export TERM=xterm-256color
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
@@ -72,12 +79,17 @@ ZSH_THEME="robbyrussell"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 
+# Linux version of OSX pbcopy and pbpaste.
+alias pbcopy="xclip -sel clip"
+alias pbpaste="xclip -o -sel clip"
+
 source ~/Repos/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 
 plugins=(git
     zsh-autosuggestions
     zsh-syntax-highlighting
-    )
+    zsh-npm-scripts-autocomplete
+)
 HISTFILE="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/history"
 HISTSIZE=1000000
 SAVEHIST=1000000
@@ -85,8 +97,8 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 source $ZSH/oh-my-zsh.sh
 [ -f ~/.config/lf/LF_ICONS ] && {
-	LF_ICONS="$(tr '\n' ':' <~/.config/lf/LF_ICONS)" \
-		&& export LF_ICONS
+    LF_ICONS="$(tr '\n' ':' <~/.config/lf/LF_ICONS)" \
+        && export LF_ICONS
 }
 # User configuration
 
@@ -96,11 +108,11 @@ source $ZSH/oh-my-zsh.sh
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
+if [[ -n $SSH_CONNECTION ]]; then
+    export EDITOR='vim'
+else
+    export EDITOR='nvim'
+fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -115,14 +127,13 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 # Download Znap, if it's not there yet.
 [[ -r ~/Repos/znap/znap.zsh ]] ||
-    git clone --depth 1 -- \
-        https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
+git clone --depth 1 -- \
+    https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
 source ~/Repos/znap/znap.zsh  # Start Znap
 SHOW_MAN="/home/rssl/scripts/fzf_man.sh"
 if [ -f "$SHOW_MAN" ]; then
     source "$SHOW_MAN" --source-only
 fi
-
 RUN_NOTE="/home/rssl/scripts/run_notes.sh"
 if [ -f "$RUN_NOTE" ]; then
     source "$RUN_NOTE" --source-only
@@ -155,15 +166,30 @@ LFCD="/home/rssl/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
     source "$LFCD"
 fi
-
+FSTASH="/home/rssl/scripts/fstash.sh"
+if [ -f "$FSTASH" ]; then
+    source "$FSTASH"
+fi
 bindkey -s '^o' 'lfcd\n'
-bindkey -s '^e' 'nvim\n'
 bindkey -s '^i' 'show_man\n'
+bindkey -s '^e' 'nvim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'run_notes\n'
-bindkey -s '^t' 'run_secrets\n'
-bindkey -s '^h' 'cd ~\n'
+bindkey -s '^p' 'run_secrets\n'
+# bindkey -s '^H' 'cd ~\n'
 bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh >/dev/null 2>&1 & disown\n'
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+LF_ICONS=$(sed /home/rssl/.config/lf/icons \
+        -e '/^[ \t]*#/d'       \
+        -e '/^[ \t]*$/d'       \
+        -e 's/[ \t]\+/=/g'     \
+    -e 's/$/ /')
+LF_ICONS=${LF_ICONS//$'\n'/:}
+export LF_ICONS
+eval "$(starship init zsh)"
+export PATH="$PATH:$(go env GOPATH)/bin"
+
 
 export LESS="-R -q"
 export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
@@ -180,15 +206,20 @@ export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
 
-
 alias ls='exa --color=auto'
+zstyle ':completion:*' insert-tab false
+export GOPRIVATE=github.tools.sap
+. "$HOME/.cargo/env"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+export PATH="/home/rssl/anaconda3/bin:$PATH"
+export NVM_DIR="$HOME/.config/nvm"
+export PATH="$HOME/flutter/flutter/bin:$PATH"
+export PATH="$HOME/development/flutter/bin:$PATH"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# source /home/linuxbrew/.linuxbrew/share/powerlevel10k/powerlevel10k.zsh-theme
+#
+# # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-LF_ICONS=$(sed ~/.config/lf/icons \
-            -e '/^[ \t]*#/d'       \
-            -e '/^[ \t]*$/d'       \
-            -e 's/[ \t]\+/=/g'     \
-            -e 's/$/ /')
-LF_ICONS=${LF_ICONS//$'\n'/:}
-export LF_ICONS
-eval "$(starship init zsh)"
+eval "$(fzf --zsh)"
