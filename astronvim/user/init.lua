@@ -9,6 +9,11 @@ return {
     -- vim.cmd "colorscheme gruvbox-flat"
     vim.cmd "colorscheme dracula"
 
+    vim.filetype.add {
+      extension = {
+        templ = "templ",
+      },
+    }
     vim.g.gruvbox_flat_style = "hard"
     -- vim.opt.mouse = ""
     -- vim.cmd("highlight Normal ctermbg=NONE guibg=NONE")
@@ -68,6 +73,7 @@ return {
         desc = "Toggle blame",
       },
 
+      ["<Leader>um"] = { "<cmd>MinimapToggle<cr>", desc = "Toggle minimap" },
       ["<leader>gf"] = {
         "<cmd>OpenInGHFileLines<cr>",
         desc = "Open GH on Line",
@@ -175,6 +181,7 @@ return {
     servers = {
       "dartls",
       "clangd",
+      "templ",
     },
     setup_handlers = {
       -- add custom handler
@@ -209,6 +216,7 @@ return {
     },
   },
   plugins = {
+    { "typos-lsp" },
     {
       "p00f/clangd_extensions.nvim", -- install lsp plugin
       init = function()
@@ -368,12 +376,19 @@ return {
       opts = {},
     },
     {
+      "aserowy/tmux.nvim",
+      config = function() return require("tmux").setup() end,
+    },
+    {
       "rebelot/heirline.nvim",
       opts = function(_, opts)
         local status = require "astronvim.utils.status"
         opts.statusline = { -- statusline
           hl = { fg = "fg", bg = "bg" },
           status.component.mode { mode_text = { padding = { left = 1, right = 1 } } }, -- add the mode text
+          status.component.foldcolumn(),
+          status.component.numbercolumn(),
+          status.component.signcolumn(),
           status.component.git_branch(),
           status.component.file_info { filetype = {}, filename = false, file_modified = false },
           status.component.git_diff(),
@@ -386,6 +401,13 @@ return {
           status.component.nav(),
           -- remove the 2nd mode indicator on the right
         }
+
+        -- opts.statuscolumn = {
+        --   init = function(self) self.bufnr = vim.api.nvim_get_current_buf() end,
+        --   status.component.foldcolumn(),
+        --   status.component.numbercolumn(),
+        --   status.component.signcolumn(),
+        -- }
 
         -- return the final configuration table
         return opts
@@ -456,34 +478,44 @@ return {
     },
     {
       "wfxr/minimap.vim",
-      -- event = "User AstroFile",
       cmd = { "Minimap", "MinimapClose", "MinimapToggle", "MinimapRefresh", "MinimapUpdateHighlight" },
-      keys = {
-        { "<leader>um", "<cmd>MinimapToggle<CR>", desc = "Toggle minimap", mode = { "n" } },
+      dependencies = {
+        {
+          "AstroNvim/astrocore",
+          opts = {
+            mappings = {
+              n = {
+                ["<Leader>um"] = { "<Cmd>MinimapToggle<CR>", desc = "Toggle minimap" },
+              },
+            },
+            options = {
+              g = {
+                minimap_width = 10,
+                minimap_auto_start = 1,
+                minimap_auto_start_win_enter = 1,
+                minimap_block_filetypes = {
+                  "fugitive",
+                  "nerdtree",
+                  "tagbar",
+                  "fzf",
+                  "qf",
+                  "netrw",
+                  "NvimTree",
+                  "lazy",
+                  "mason",
+                  "prompt",
+                  "TelescopePrompt",
+                  "noice",
+                  "notify",
+                  "neo-tree",
+                },
+                minimap_highlight_search = 1,
+                minimap_git_colors = 1,
+              },
+            },
+          },
+        },
       },
-      init = function()
-        vim.g.minimap_width = 10
-        vim.g.minimap_auto_start = 1
-        vim.g.minimap_auto_start_win_enter = 1
-        vim.g.minimap_block_filetypes = {
-          "fugitive",
-          "nerdtree",
-          "tagbar",
-          "fzf",
-          "qf",
-          "netrw",
-          "NvimTree",
-          "lazy",
-          "mason",
-          "prompt",
-          "TelescopePrompt",
-          "noice",
-          "notify",
-          "neo-tree",
-        }
-        vim.g.minimap_highlight_search = 1
-        vim.g.minimap_git_colors = 1
-      end,
     },
 
     {
