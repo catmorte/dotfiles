@@ -206,7 +206,7 @@ export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
 
-alias ls='exa --color=auto'
+alias ls='eza --color=auto'
 zstyle ':completion:*' insert-tab false
 export GOPRIVATE=github.tools.sap
 . "$HOME/.cargo/env"
