@@ -25,4 +25,6 @@ mkdocs
 jupyter-labs
 dive
 viddy
+taskwarior
+fuck
 ```
