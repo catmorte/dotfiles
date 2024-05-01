@@ -19,7 +19,7 @@ starship
 kitty
 rclone
 entr
-exa
+eza
 ntfy
 mkdocs
 jupyter-labs
