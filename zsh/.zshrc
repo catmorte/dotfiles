@@ -170,9 +170,21 @@ FSTASH="/home/rssl/scripts/fstash.sh"
 if [ -f "$FSTASH" ]; then
     source "$FSTASH"
 fi
-bindkey -s '^o' 'lfcd\n'
+
+function yy() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+        cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+}
+
+
+alias fim='nvim $(fzf -m --preview="bat --color=always {}")'
+bindkey -s '^o' 'yy\n'
 bindkey -s '^i' 'show_man\n'
-bindkey -s '^e' 'nvim\n'
+bindkey -s '^e' 'fim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'run_notes\n'
 bindkey -s '^p' 'run_secrets\n'
@@ -206,7 +218,7 @@ export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
 
-alias ls='eza --color=auto'
+alias ls='exa --color=auto'
 zstyle ':completion:*' insert-tab false
 export GOPRIVATE=github.tools.sap
 . "$HOME/.cargo/env"
@@ -222,4 +234,5 @@ export PATH="$HOME/development/flutter/bin:$PATH"
 # # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 # [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-eval "$(fzf --zsh)"
+source <(fzf --zsh)
+eval "$(thefuck --alias)"
