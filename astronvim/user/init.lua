@@ -313,11 +313,14 @@ return {
       "copilot.lua",
       opts = {
         filetypes = {
+          vue = true,
+          html = true,
+          js = true,
           lua = true,
           javascript = true,
           typescript = true,
           golang = true,
-          go = true,
+          go = false,
           cpp = true,
           sh = true,
           py = true,
