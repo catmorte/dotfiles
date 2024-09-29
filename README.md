@@ -28,4 +28,5 @@ viddy
 taskwarior
 fuck
 iredis
+yazi
 ```
