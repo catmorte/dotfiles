@@ -3,7 +3,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="nvim"
 export VISUAL="$EDITOR"
 export PATH="$HOME/.cargo/bin:$PATH"
-export PATH="$(go env GOPATH)/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"
 export LESS="-R -q"
 export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
 export LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
@@ -19,6 +19,10 @@ export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
 export OLLAMA_HOST=127.0.0.1:11435
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  
+
 # aliases
 alias fim='nvim $(fzf -m --preview="bat --color=always {}")'
 alias ls='eza --color=auto'

@@ -17,7 +17,6 @@ zle -N edit-command-line
 # tools
 source <(fzf --zsh)
 source $ZSH/oh-my-zsh.sh
-source /usr/share/nvm/init-nvm.sh
 source "$HOME/.oh-my-zsh/custom/plugins/zsh-autocomplete/zsh-autocomplete.plugin.zsh"
 eval "$(starship init zsh)"
 eval "$(thefuck --alias)"
@@ -33,4 +32,12 @@ bindkey -s '^n' 'run_remarks\n'
 bindkey -s '^p' 'run_secrets\n'
 bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh >/dev/null 2>&1 & disown\n'
 bindkey -s '^o' 'yy\n'
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+case 'uname' in
+  Darwin)
+
+  ;;
+  Linux)
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  ;;
+esac
+
