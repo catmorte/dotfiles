@@ -1,7 +1,6 @@
 ```
 zsh,oh-my-zsh(oh-my-posh)
 tldr
-btop
 gdu
 ripgrep
 fzf
@@ -9,7 +8,7 @@ tmux
 nvim + astronvim
 git + lazygit
 docker + lazydocker
-bottom & glances
+bottom
 k9s
 go + gotests
 lf
