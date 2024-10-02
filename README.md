@@ -6,9 +6,12 @@ atool
 ripgrep
 fzf
 tmux
-nvim + astronvim
-git + lazygit
-docker + lazydocker
+nvim
+astronvim
+git
+lazygit
+docker
+lazydocker
 bottom
 k9s
 go + gotests
@@ -20,13 +23,15 @@ kitty
 rclone
 entr
 eza
-ntfy
-mkdocs
-jupyter-labs
 dive
 viddy
 taskwarior
 fuck
 iredis
 yazi
+stow
+tabby
+ollama
+jless
+gtt
 ```

@@ -126,7 +126,7 @@ function add_secret() {
     echo "$value" | gpg --symmetric --no-symkey-cache --batch --passphrase "$masterkey" >"$fullapth"
 
     if [[ $? -eq 0 ]]; then
-        nohup ./sync_notes.sh >/dev/null 2>&1 &
+        sync_notes
         disown
     else
         rm $fullapth
@@ -175,7 +175,7 @@ function new_remark() {
     nvim $fullapth
 
     if [[ $? -eq 0 ]]; then
-        nohup ./sync_notes.sh >/dev/null 2>&1 &
+        sync_notes
         disown
     else
         rm $fullapth

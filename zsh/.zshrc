@@ -30,7 +30,7 @@ bindkey -s '^e' 'fim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'run_remarks\n'
 bindkey -s '^p' 'run_secrets\n'
-bindkey -s '^w' 'nohup /home/rssl/scripts/sync_notes.sh >/dev/null 2>&1 & disown\n'
+bindkey -s '^w' 'sync_notes\n'
 bindkey -s '^o' 'yy\n'
 case 'uname' in
   Darwin)
