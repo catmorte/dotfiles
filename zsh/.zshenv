@@ -4,6 +4,8 @@ export EDITOR="nvim"
 export VISUAL="$EDITOR"
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
 export LESS="-R -q"
 export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
 export LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
