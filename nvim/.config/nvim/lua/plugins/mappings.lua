@@ -14,6 +14,7 @@ return {
           ["<Leader>xD"] = { ":.!base64 -d<cr>", desc = "base64 Decode" },
           ["<Leader>xE"] = { ":.!base64 <cr>", desc = "base64 Encode" },
           ["<Leader>xJ"] = { ":.!jq .<cr>", desc = "JQ Format file" },
+          ["<Leader>xl"] = { ":execute 'split | terminal' getline('.')<CR>", desc = "Exec line to split pane" },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
