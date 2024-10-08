@@ -31,6 +31,7 @@ bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'run_remarks\n'
 bindkey -s '^p' 'run_secrets\n'
 bindkey -s '^w' 'sync_notes\n'
+bindkey -s '^i' 'run_api\n'
 bindkey -s '^o' 'yy\n'
 case 'uname' in
   Darwin)

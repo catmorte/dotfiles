@@ -10,7 +10,7 @@ return {
 
           ["<Leader>x"] = { desc = "Misc" },
           ["<Leader>xp"] = { ":call setreg('+', expand('%:p'))<cr>", desc = "PWD" },
-          ["<Leader>xc"] = { ":!chmod +x <cr>", desc = "Make executable" },
+          ["<Leader>xc"] = { ":!chmod +x %<cr>", desc = "Make executable" },
           ["<Leader>xD"] = { ":.!base64 -d<cr>", desc = "base64 Decode" },
           ["<Leader>xE"] = { ":.!base64 <cr>", desc = "base64 Encode" },
           ["<Leader>xJ"] = { ":.!jq .<cr>", desc = "JQ Format file" },

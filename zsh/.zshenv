@@ -45,7 +45,7 @@ function yy() {
 # work with secrets
 function run_secrets() {
     types=('read' 'add')
-    selected_type=$(printf "%s\n" "${types[@]}" | fzf)
+    selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
     if [[ -z $selected_type ]]; then
         exit 0
     fi
@@ -61,12 +61,12 @@ function read_secret() {
     _zsh_highlight() {}
 
     notes=$HOME/notes/keys/
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | fzf)
+    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
 
-    note_name=$(eza --no-quotes $notes/"$opt" | fzf)
+    note_name=$(eza --no-quotes $notes/"$opt" | fzf --border=rounded --height 20 --prompt="Select secret: " --layout=reverse)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
@@ -110,7 +110,7 @@ function add_secret() {
     fi
 
     notes=$HOME/notes/keys/
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | fzf)
+    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
@@ -138,7 +138,7 @@ function add_secret() {
 # run notes
 function run_remarks() {
     types=('read' 'add')
-    selected_type=$(printf "%s\n" "${types[@]}" | fzf)
+    selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
     if [[ -z $selected_type ]]; then
         exit 0
     fi
@@ -153,7 +153,7 @@ function run_remarks() {
 function new_remark() {
     _zsh_highlight() {}
     notes=$HOME/notes/remarks/
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf)
+    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
@@ -168,11 +168,14 @@ function new_remark() {
     mkdir -p $folder
     fullapth="$folder"/note.md
     touch $fullapth
-    echo "# ${note_name}" >> "$fullapth"
-    echo "## ${current_date} ${current_time}" >> "$fullapth"
-    echo " " >> "$fullapth"
-    echo "\`\`\`text" >> "$fullapth"
-    echo "\`\`\`" >> "$fullapth"
+    cat <<EOF >> $fullapth
+    # ${note_name}
+    ## ${current_date} ${current_time}
+
+    ```text
+
+    ```
+EOF
 
     nvim $fullapth
 
@@ -188,12 +191,12 @@ function new_remark() {
 function open_remark() {
     _zsh_highlight() {}
     notes=$HOME/notes/remarks
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf)
+    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
 
-    note_name=$(eza --no-quotes $notes/"$opt" | fzf)
+    note_name=$(eza --no-quotes $notes/"$opt" | fzf --border=rounded --height 20 --prompt="Select remark: " --layout=reverse)
     if [[ "$?" -ne 0 ]]; then
         return
     fi
@@ -255,4 +258,159 @@ function tmuxgtcl_list() {
     done
 }
 
+# api
+function new_api() {
+    _zsh_highlight() {}
+    spaces=$HOME/notes/apis/
+    opt=$(find $spaces -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf)
+    if [[ "$?" -ne 0 ]]; then
+        return
+    fi
 
+    echo "Enter api name: "
+    read api_name
+
+    folder=$spaces/"$opt"/api/"$api_name"
+    mkdir -p $folder
+    mkdir -p $folder/requests/default
+    mkdir -p $folder/responses/default
+
+    echo "Content-Type: application/json" > "$folder"/requests/default/headers
+    echo '{}' > "$folder"/requests/default/body
+
+    cat <<EOF >> $folder/before.sh
+# save history
+DIR=\$(dirname "\$0")
+DT="\$(date +%s)"
+mv "\$DIR/responses/\$NAME/body" "\$DIR/responses/\$NAME/\$DT.response"
+mv "\$DIR/responses/\$NAME/headers" "\$DIR/responses/\$NAME/\$DT.headers"
+# do stuff
+# varValue=\$(jq -r '.value' < \$DIR/../<API_NAME>/responses/\$NAME/body)
+# sed "s/{{var}}/\$varValue/g" "\$DIR/requests/\$NAME/body.template" > "\$DIR/requests/\$NAME/body"
+# sed "s/{{var}}/\$token/g" "\$DIR/requests/\$NAME/headers.template" > "\$DIR/requests/\$NAME/headers"
+EOF
+
+    cat <<EOF >> $folder/after.sh
+EOF
+
+    cat <<EOF >> $folder/script.sh
+#!/bin/bash
+DIR=\$(dirname "\$0")
+/bin/bash \$DIR/before.sh
+METHOD=<SET METHOD>
+URL=<SET URL>
+
+curl -X \$METHOD \\
+  --header @"\$DIR/requests/\$NAME/headers" \\
+  -d @"\$DIR/requests/\$NAME/body" \\
+  -o "\$DIR/responses/\$NAME/body" \\
+  -D "\$DIR/responses/\$NAME/headers" \\
+  "\$URL"
+
+/bin/bash \$DIR/after.sh
+EOF
+    
+    chmod +x "$folder"/before.sh
+    chmod +x "$folder"/after.sh
+    chmod +x "$folder"/script.sh
+
+
+    nvim "$folder"/script.sh
+
+    if [[ $? -eq 0 ]]; then
+        sync_notes
+        disown
+    else
+        rm -r $folder
+    fi
+}
+
+function set_api() {
+    _zsh_highlight() {}
+    spaces=$HOME/notes/apis/
+    space=$(find $spaces -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
+    if [[ "$?" -ne 0 ]]; then
+        return
+    fi
+
+    export API_SPACE=$space
+
+    envs=$HOME/notes/apis/$space/envs
+    env=$(find $envs -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select environment: " --layout=reverse)
+    if [[ "$?" -ne 0 ]]; then
+        return
+    fi
+
+    export API_ENV=$env
+    echo "Use $space, for $env environment"
+}
+
+function call_api() {
+    _zsh_highlight() {}
+    apis=$HOME/notes/apis/$API_SPACE/api
+    api=$(find $apis -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select api to call: " --layout=reverse)
+    if [[ "$?" -ne 0 ]]; then
+        return
+    fi
+
+    names=$apis/"$api"/requests
+    name=$(find $names -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select case name: " --layout=reverse)
+    if [[ "$?" -ne 0 ]]; then
+        return
+    fi
+
+    echo "Call $api, for $name name"
+
+    envs=$HOME/notes/apis/$space/envs/$API_ENV
+    env=$(find $envs -maxdepth 1 -mindepth 1  -printf "%f\n" | fzf -m --border=rounded --height 20 --prompt="Select vars (TAB to select multiple): " --layout=reverse)
+    if [[ "$?" -ne 0 ]]; then
+        return
+    fi
+
+    lines=("${(f)env}")
+    for line in "${lines[@]}";do
+        echo "$envs/$line"
+        source "$envs/$line"
+    done
+
+
+    NAME=$name /bin/bash $apis/$api/script.sh
+    nvim $apis/$api/responses/$name/body $apis/$api/responses/$name/headers
+}
+
+function run_api() {
+    types=('call api' 'set space and environment' 'add new space' 'add new environment' 'add new vars to environment' 'add new api')
+    selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
+    if [[ -z $selected_type ]]; then
+        exit 0
+    fi
+    if [[ $selected_type == "call api" ]]; then
+        call_api $@
+    elif [[ $selected_type == "set space and environment" ]]; then
+        set_api $@
+    elif [[ $selected_type == "add new api" ]]; then
+        new_api $@
+    elif [[ $selected_type == "add new space" ]]; then
+        echo "Enter space name: "
+        read space_name
+        mkdir -p $HOME/notes/apis/$space_name
+        mkdir -p $HOME/notes/apis/$space_name/envs
+        mkdir -p $HOME/notes/apis/$space_name/api
+        export API_SPACE=$space_name
+        sync_notes
+    elif [[ $selected_type == "add new environment" ]]; then
+        echo "Enter env name: "
+        read env_name
+        mkdir -p $HOME/notes/apis/$API_SPACE/envs/$env_name
+        touch $HOME/notes/apis/$API_SPACE/envs/$env_name/base.env
+        nvim $HOME/notes/apis/$API_SPACE/envs/$env_name/base.env
+        export API_ENV=$env_name
+        sync_notes
+    elif [[ $selected_type == "add new vars to environment" ]]; then
+        echo "Enter env vars name (without .env): "
+        read env_name
+        touch $HOME/notes/apis/$API_SPACE/envs/$API_ENV/$env_name.env
+        nvim $HOME/notes/apis/$API_SPACE/envs/$API_ENV/$env_name.env
+        sync_notes
+    fi
+}
