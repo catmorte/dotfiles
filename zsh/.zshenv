@@ -54,7 +54,6 @@ function select_files() {
     printf "$selection"
 }
 
-# funcs
 # yazi
 function yy() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
@@ -67,165 +66,137 @@ function yy() {
 
 # work with secrets
 function run_secrets() {
-    types=('read' 'add')
+    notes=$HOME/notes/keys/
+    types=('READ' 'ADD' 'DELETE')
     selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
     if [[ -z $selected_type ]]; then
         exit 0
     fi
-    if [[ $selected_type == "read" ]]; then
-        read_secret $@
-    else
-        add_secret $@
-    fi
-}
-
-# read secrets
-function read_secret() {
-    _zsh_highlight() {}
-
-    notes=$HOME/notes/keys/
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
-    if [[ "$?" -ne 0 ]]; then
-        return
-    fi
-
-    note_name=$(eza --no-quotes $notes/"$opt" | fzf --border=rounded --height 20 --prompt="Select secret: " --layout=reverse)
-    if [[ "$?" -ne 0 ]]; then
-        return
-    fi
-
-    folder=$notes/"$opt"/"$note_name"
-    fullapth="$folder"/secret.gpg
-    masterkey=$(gpg --decrypt --no-symkey-cache "${notes}"master.gpg 2>/dev/null)
-
-    value=$(gpg --decrypt --batch --yes --no-symkey-cache --passphrase $masterkey "$fullapth" 2>/dev/null)
-    types=('buffer' 'stdout')
-    selected_type=$(printf "%s\n" "${types[@]}" | fzf)
-    if [[ -z $selected_type ]]; then
-        exit 0
-    fi
-    if [[ $selected_type == "buffer" ]]; then
-        echo "$value" | pbcopy
-    else
-        echo "$value"
-    fi
-}
-
-# add secret
-function add_secret() {
-    _zsh_highlight() {}
-    if [[ ! -t 0 ]]; then
-        value=$(</dev/stdin)
-    elif [[ $# -gt 0 ]]; then
-        value="$1"
-    else
-        types=('buffer' 'manual')
+    if [[ $selected_type == "READ" ]]; then
+        _zsh_highlight() {}
+        if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
+        if ! note_name=$(select_files "Select secret: " "$notes/$opt"); then; return; fi
+        folder=$notes/"$opt"/"$note_name"
+        fullapth="$folder"/secret.gpg
+        masterkey=$(gpg --decrypt --no-symkey-cache "${notes}"master.gpg 2>/dev/null)
+        value=$(gpg --decrypt --batch --yes --no-symkey-cache --passphrase $masterkey "$fullapth" 2>/dev/null)
+        types=('BUFFER' 'STDOUT')
         selected_type=$(printf "%s\n" "${types[@]}" | fzf)
         if [[ -z $selected_type ]]; then
             exit 0
         fi
-        if [[ $selected_type == "buffer" ]]; then
-            value=$(pbpaste)
+        if [[ $selected_type == "BUFFER" ]]; then
+            echo "$value" | pbcopy
         else
-            echo "Enter secret value: "
-            read -s value
+            echo "$value"
         fi
-    fi
 
-    notes=$HOME/notes/keys/
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
-    if [[ "$?" -ne 0 ]]; then
-        return
-    fi
+    elif [[ $selected_type == "ADD" ]]; then 
+        _zsh_highlight() {}
+        if [[ ! -t 0 ]]; then
+            value=$(</dev/stdin)
+        elif [[ $# -gt 0 ]]; then
+            value="$1"
+        else
+            types=('BUFFER' 'MANUAL')
+            selected_type=$(printf "%s\n" "${types[@]}" | fzf)
+            if [[ -z $selected_type ]]; then
+                exit 0
+            fi
+            if [[ $selected_type == "BUFFER" ]]; then
+                value=$(pbpaste)
+            else
+                echo "Enter secret value: "
+                read -s value
+            fi
+        fi
 
-    current_date=$(date "+%Y.%m.%d")
-    current_time=$(date "+%H:%M:%S")
+        if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
 
-    echo "Enter key name: "
-    read note_name </dev/tty
+        current_date=$(date "+%Y.%m.%d")
+        current_time=$(date "+%H:%M:%S")
 
-    masterkey=$(gpg --decrypt --no-symkey-cache ${notes}master.gpg 2>/dev/null)
-    folder=$notes/"$opt"/"$current_date"_"$current_time"_"$note_name"
-    fullapth="$folder"/secret.gpg
-    mkdir -p "$folder"
-    echo "$value" | gpg --symmetric --no-symkey-cache --batch --passphrase "$masterkey" >"$fullapth"
+        echo "Enter key name: "
+        read note_name </dev/tty
 
-    if [[ $? -eq 0 ]]; then
-        sync_notes
-        disown
-    else
-        rm $fullapth
+        masterkey=$(gpg --decrypt --no-symkey-cache ${notes}master.gpg 2>/dev/null)
+        folder=$notes/"$opt"/"$current_date"_"$current_time"_"$note_name"
+        fullapth="$folder"/secret.gpg
+        mkdir -p "$folder"
+        echo "$value" | gpg --symmetric --no-symkey-cache --batch --passphrase "$masterkey" >"$fullapth"
+
+        if [[ $? -eq 0 ]]; then
+            sync_notes
+            disown
+        else
+            rm $fullapth
+        fi
+    elif [[ $selected_type == "DELETE" ]]; then 
+        if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
+        if ! note_name=$(select_files "Select secret: " "$notes/$opt"); then; return; fi
+        rm -r -i  $notes/"$opt"/"$note_name"
     fi
 }
 
 # run notes
 function run_remarks() {
-    types=('read' 'add')
+    notes=$HOME/notes/remarks/
+    types=('READ/UPDATE' 'ADD' 'DELETE')
     selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
     if [[ -z $selected_type ]]; then
         exit 0
     fi
-    if [[ $selected_type == "read" ]]; then
-        open_remark $@
-    else
-        new_remark $@
-    fi
-}
+    if [[ $selected_type == "READ/UPDATE" ]]; then
+        _zsh_highlight() {}
+        if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
 
-# new note
-function new_remark() {
-    _zsh_highlight() {}
-    notes=$HOME/notes/remarks/
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
-    if [[ "$?" -ne 0 ]]; then
-        return
-    fi
+        note_name=$(eza --no-quotes $notes/"$opt" | fzf --border=rounded --height 20 --prompt="Select remark: " --layout=reverse)
+        if [[ "$?" -ne 0 ]]; then
+            return
+        fi
+        folder=$notes/"$opt"/"$note_name"
+        fullapth="$folder"/note.md
+        nvim "$fullapth"
+    elif [[ $selected_type == "ADD" ]]; then 
+        _zsh_highlight() {}
+        if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
 
-    current_date=$(date "+%Y.%m.%d")
-    current_time=$(date "+%H:%M:%S")
+        current_date=$(date "+%Y.%m.%d")
+        current_time=$(date "+%H:%M:%S")
 
-    echo "Enter remark name: "
-    read note_name
+        echo "Enter remark name: "
+        read note_name
 
-    folder=$notes/"$opt"/"$current_date"_"$current_time"_"$note_name"
-    mkdir -p $folder
-    fullapth="$folder"/note.md
-    touch $fullapth
-    cat <<EOF >> $fullapth
-    # ${note_name}
-    ## ${current_date} ${current_time}
+        folder=$notes/"$opt"/"$current_date"_"$current_time"_"$note_name"
+        mkdir -p $folder
+        fullapth="$folder"/note.md
+        touch $fullapth
+        cat <<EOF >> $fullapth
+# ${note_name}
+## ${current_date} ${current_time}
 
-    ```text
+```text
 
-    ```
+```
 EOF
 
-    nvim $fullapth
+        nvim $fullapth
+        if [[ $? -eq 0 ]]; then
+            sync_notes
+            disown
+        else
+            rm $fullapth
+        fi
+    elif [[ $selected_type == "DELETE" ]]; then 
+        _zsh_highlight() {}
+        if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
 
-    if [[ $? -eq 0 ]]; then
-        sync_notes
-        disown
-    else
-        rm $fullapth
+        note_name=$(eza --no-quotes $notes/"$opt" | fzf --border=rounded --height 20 --prompt="Select remark: " --layout=reverse)
+        if [[ "$?" -ne 0 ]]; then
+            return
+        fi
+        rm -r -i  $notes/"$opt"/"$note_name"
     fi
-}
-
-# open note
-function open_remark() {
-    _zsh_highlight() {}
-    notes=$HOME/notes/remarks
-    opt=$(find $notes -maxdepth 1 -mindepth 1 -type d  -printf "%f\n" | fzf --border=rounded --height 20 --prompt="Select space: " --layout=reverse)
-    if [[ "$?" -ne 0 ]]; then
-        return
-    fi
-
-    note_name=$(eza --no-quotes $notes/"$opt" | fzf --border=rounded --height 20 --prompt="Select remark: " --layout=reverse)
-    if [[ "$?" -ne 0 ]]; then
-        return
-    fi
-    folder=$notes/"$opt"/"$note_name"
-    fullapth="$folder"/note.md
-    nvim "$fullapth"
 }
 
 # sync all notes
@@ -282,69 +253,12 @@ function tmuxgtcl_list() {
 }
 
 # api
-function new_api() {
-    _zsh_highlight() {}
-    local spaces=$HOME/notes/apis/
-
-    echo "Enter api name: "
-    read api_name
-
-    local folder=$spaces/"$API_SPACE"/api/"$api_name"
-    mkdir -p $folder
-    mkdir -p $folder/requests/default
-    mkdir -p $folder/responses/default
-
-    echo "Content-Type: application/json" > "$folder"/requests/default/headers
-    echo '{}' > "$folder"/requests/default/body
-
-    cat <<EOF >> $folder/before.sh
-# save history
-DIR=\$(dirname "\$0")
-DT="\$(date +%s)"
-mv "\$DIR/responses/\$NAME/body" "\$DIR/responses/\$NAME/\$DT.response"
-mv "\$DIR/responses/\$NAME/headers" "\$DIR/responses/\$NAME/\$DT.headers"
-# do stuff
-# varValue=\$(jq -r '.value' < \$DIR/../<API_NAME>/responses/\$NAME/body)
-# sed "s/{{var}}/\$varValue/g" "\$DIR/requests/\$NAME/body.template" > "\$DIR/requests/\$NAME/body"
-# sed "s/{{var}}/\$token/g" "\$DIR/requests/\$NAME/headers.template" > "\$DIR/requests/\$NAME/headers"
-EOF
-
-    cat <<EOF >> $folder/after.sh
-EOF
-
-    cat <<EOF >> $folder/script.sh
-#!/bin/bash
-DIR=\$(dirname "\$0")
-/bin/bash \$DIR/before.sh
-METHOD=<SET METHOD>
-URL=<SET URL>
-
-curl -X \$METHOD \\
-  --header @"\$DIR/requests/\$NAME/headers" \\
-  -d @"\$DIR/requests/\$NAME/body" \\
-  -o "\$DIR/responses/\$NAME/body" \\
-  -D "\$DIR/responses/\$NAME/headers" \\
-  "\$URL"
-
-/bin/bash \$DIR/after.sh
-EOF
-    
-    chmod +x "$folder"/before.sh
-    chmod +x "$folder"/after.sh
-    chmod +x "$folder"/script.sh
-
-
-    nvim "$folder"/script.sh
-
-    if [[ $? -eq 0 ]]; then
-        sync_notes
-        disown
-    else
-        rm -r $folder
-    fi
-}
-
 function run_api() {
+    local spaces=$HOME/notes/apis
+    local apis=$spaces/$API_SPACE/api
+    local envs=$spaces/$API_SPACE/envs
+    local vars=$envs/$API_ENV
+
     local types=('call api' 'switch space and environment' 'add space' 'add environment' 'add vars to environment' 'add api' 'add case name')
     local selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
     if [[ -z $selected_type ]]; then
@@ -352,44 +266,31 @@ function run_api() {
     fi
     if [[ $selected_type == "call api" ]]; then
         _zsh_highlight() {}
-        local apis=$HOME/notes/apis/$API_SPACE/api
         local api=$(select_dir "Select api to call: " $apis)
-
         local names=$apis/"$api"/requests
         local name=$(select_dir "Select case name: " $names)
-
         echo "Call $api, for $name name"
-
-        local vars=$HOME/notes/apis/$space/envs/$API_ENV
         local varsToUse=$(select_files "Select vars (TAB to select multiple): " $vars)
-
-        printf $varsToUse
         local lines=("${(f)varsToUse}")
         for line in "${lines[@]}";do
             echo "$vars/$line"
             source "$vars/$line"
         done
-
         NAME=$name /bin/bash $apis/$api/script.sh
         nvim $apis/$api/responses/$name/body $apis/$api/responses/$name/headers
     elif [[ $selected_type == "switch space and environment" ]]; then
         _zsh_highlight() {}
-        local spaces=$HOME/notes/apis/
         if ! space=$(select_dir "Select space: " "$spaces"); then; return; fi
         export API_SPACE=$space
-
         local envs=$HOME/notes/apis/$space/envs
         if ! env=$(select_dir "Select environment: " "$envs"); then; return; fi
         export API_ENV=$env
         echo "Use $space, for $env environment"
     elif [[ $selected_type == "add api" ]]; then
         _zsh_highlight() {}
-        local spaces=$HOME/notes/apis/
-
         echo "Enter api name: "
         read api_name
-
-        local folder=$spaces/"$API_SPACE"/api/"$api_name"
+        local folder=$apis/"$api_name"
         mkdir -p $folder
         mkdir -p $folder/requests/default
         mkdir -p $folder/responses/default
@@ -446,42 +347,42 @@ EOF
         local api=$(select_dir "Select api to which add new case: " $apis)
         echo "Enter case name: "
         read case_name
-        mkdir -p $HOME/notes/apis/$API_SPACE/api/$api/requests/$case_name
-        touch $HOME/notes/apis/$API_SPACE/api/$api/requests/$case_name/body
-        touch $HOME/notes/apis/$API_SPACE/api/$api/requests/$case_name/headers
-        nvim $HOME/notes/apis/$API_SPACE/api/$api/requests/$case_name/body $HOME/notes/apis/$API_SPACE/api/$api/requests/$case_name/headers
+        mkdir -p $apis/$api/requests/$case_name
+        touch $apis/$api/requests/$case_name/body
+        touch $apis/$api/requests/$case_name/headers
+        nvim $apis/api/$api/requests/$case_name/body $apis/$api/requests/$case_name/headers
         if [[ $? -eq 0 ]]; then
             sync_notes
             disown
         else
-            rm -r $HOME/notes/apis/$API_SPACE/envs/$env_name
+            rm -r $apis/$api/requests/$case_name
         fi
     elif [[ $selected_type == "add space" ]]; then
         echo "Enter space name: "
         read space_name
-        mkdir -p $HOME/notes/apis/$space_name
-        mkdir -p $HOME/notes/apis/$space_name/envs
-        mkdir -p $HOME/notes/apis/$space_name/api
+        mkdir -p $spaces/$space_name
+        mkdir -p $spaces/$space_name/envs
+        mkdir -p $spaces/$space_name/api
         export API_SPACE=$space_name
         sync_notes
     elif [[ $selected_type == "add environment" ]]; then
         echo "Enter env name: "
         read env_name
-        mkdir -p $HOME/notes/apis/$API_SPACE/envs/$env_name
-        touch $HOME/notes/apis/$API_SPACE/envs/$env_name/base.env
-        nvim $HOME/notes/apis/$API_SPACE/envs/$env_name/base.env
+        mkdir -p $envs/$env_name
+        touch $envs/$env_name/base.env
+        nvim $envs/$env_name/base.env
         if [[ $? -eq 0 ]]; then
             export API_ENV=$env_name
             sync_notes
             disown
         else
-            rm -r $HOME/notes/apis/$API_SPACE/envs/$env_name
+            rm -r $envs/$env_name
         fi
     elif [[ $selected_type == "add vars to environment" ]]; then
         echo "Enter env vars name (without .env): "
         read env_name
-        touch $HOME/notes/apis/$API_SPACE/envs/$API_ENV/$env_name.env
-        nvim $HOME/notes/apis/$API_SPACE/envs/$API_ENV/$env_name.env
+        touch $envs/$API_ENV/$env_name.env
+        nvim $envs/$API_ENV/$env_name.env
         sync_notes
     fi
 }
