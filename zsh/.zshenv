@@ -419,7 +419,7 @@ function run_api() {
         local opt=$(select_option "OPTIONS > " "/$space [$env]/VARS/$var" "${options[@]}")
         case "$opt" in
             '< BACK') space_env_vars_menu "$space" "$env" ;;
-            'UPDATE (NVIM)') cd "$root_api_path/$space/envs/$env/$var" && nvim ;;
+            'UPDATE (NVIM)') nvim "$root_api_path/$space/envs/$env/$var"  ;;
         esac
     }
     # SPACES/SN/ENVS/EN/VARS
