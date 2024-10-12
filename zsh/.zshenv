@@ -32,6 +32,19 @@ alias pbcopy="xclip -sel clip"
 alias pbpaste="xclip -o -sel clip"
 
 # utility funcs for further usage
+function select_option() {
+    local prmt=$1
+    shift
+    local header=$1
+    shift
+    opts=("$@")
+    local opt=$(printf "%s\n" "${opts[@]}" | fzf --border=rounded --height 20 --prompt="$prmt" --header="$header" --layout=reverse)
+    if [[ -z $opt ]]; then
+        exit 0
+    fi
+    printf "$opt"
+}
+
 function select_dir() {
     local title=$1
     local pth=$2
@@ -68,10 +81,7 @@ function yy() {
 function run_secrets() {
     notes=$HOME/notes/keys/
     types=('READ' 'ADD' 'DELETE')
-    selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
-    if [[ -z $selected_type ]]; then
-        exit 0
-    fi
+    local selected_type=$(select_option "Select option:" "" "${types[@]}")
     if [[ $selected_type == "READ" ]]; then
         _zsh_highlight() {}
         if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
@@ -142,10 +152,7 @@ function run_secrets() {
 function run_remarks() {
     notes=$HOME/notes/remarks/
     types=('READ/UPDATE' 'ADD' 'DELETE')
-    selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
-    if [[ -z $selected_type ]]; then
-        exit 0
-    fi
+    local selected_type=$(select_option "Select option:" "" "${types[@]}")
     if [[ $selected_type == "READ/UPDATE" ]]; then
         _zsh_highlight() {}
         if ! opt=$(select_dir "Select space: " "$notes"); then; return; fi
@@ -252,138 +259,270 @@ function tmuxgtcl_list() {
     done
 }
 
-# api
 function run_api() {
-    local spaces=$HOME/notes/apis
-    local apis=$spaces/$API_SPACE/api
-    local envs=$spaces/$API_SPACE/envs
-    local vars=$envs/$API_ENV
+    local root_api_path=$HOME/notes/apis/spaces/
+    local root_templates_path=$HOME/notes/apis/templates/
+    # NEW_SPACE
+    function new_space_menu() {
+        echo "SPACE'S NAME: "
+        read space_name
+        mkdir -p $root_api_path/$space_name
+        mkdir -p $root_api_path/$space_name/envs
+        mkdir -p $root_api_path/$space_name/api
+        existing_space_menu "$space_name"
+    }
+    function new_template_menu() {
+        echo "TEMPLATE'S NAME: "
+        read template_name
+        mkdir -p "$root_templates_path/$template_name"
+        mkdir -p "$root_templates_path/$template_name/.request_template"
+        touch "$root_templates_path/$template_name/script.sh"
+        touch "$root_templates_path/$template_name/before.sh"
+        touch "$root_templates_path/$template_name/after.sh"
+        chmod +x "$root_templates_path/$template_name/script.sh"
+        chmod +x "$root_templates_path/$template_name/before.sh"
+        chmod +x "$root_templates_path/$template_name/after.sh"
+        cd "$root_templates_path/$template_name" && nvim  
+        existing_template_menu "$template_name"
+    }
+    # SPACES/SN/ENVS/NEW_ENV
+    function new_space_env_menu() {
+        local space=$1
+        echo "/$space: NEW ENV'S NAME: "
+        read env_name
+        mkdir -p "$envs/$env_name"
+        touch "$envs/$env_name/base.env"
+        cd "$envs/$env_name" && nvim "$envs/$env_name/base.env"
+        existing_space_env_menu "$space" "$env_name"
+    }
+    # SPACES/SN/ENVS/EN/VARS/NEW_VAR
+    function new_space_env_var_menu() {
+        local space=$1
+        local env=$2
+        echo "/$space/ENVS/$env: NEW VAR'S NAME (W/O EXT): "
+        read var_name
+        touch $root_api_path/$space/envs/$env/$var_name.sh
+        cd "$root_api_path/$space/envs/$env" && nvim $root_api_path/$space/envs/$env/$var_name.sh
+        existing_space_env_vars_menu "$space" "$env" "$var_name.sh"
+    }
+    # SPACES/SN/APIS/NEW_API
+    function new_space_api_menu() {
+        local space=$1
+        local env=$2
+        echo "API'S NAME: "
+        read api_name
+        local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
+        local opt=$(select_option "FROM TEMPLATE > " "/$space [$env]/APIS" "${existing[@]}")
+        case "$opt" in
+            *) [[ -n "$opt" ]] && {
+                local template_name=$(echo "$opt" | sed 's/- //g')
+                mkdir -p "$root_api_path/$space/api/$api_name"
+                cp -r "$root_templates_path/$template_name"/* "$root_api_path/$space/api/$api_name"
+                mkdir -p "$root_api_path/$space/api/$api_name/requests/default"
+                cp -r "$root_templates_path/$template_name/.request_template"/* "$root_api_path/$space/api/$api_name/requests/default"
+                echo "$template_name" > "$root_api_path/$space/api/$api_name/.template_name"
+                cd "$root_api_path/$space/api/$api_name" && nvim
+            } ;;
+        esac
 
-    local types=('call api' 'switch space and environment' 'add space' 'add environment' 'add vars to environment' 'add api' 'add case name')
-    local selected_type=$(printf "%s\n" "${types[@]}" | fzf --border=rounded --height 20 --prompt="Select option: " --layout=reverse)
-    if [[ -z $selected_type ]]; then
-        exit 0
-    fi
-    if [[ $selected_type == "call api" ]]; then
-        _zsh_highlight() {}
-        local api=$(select_dir "Select api to call: " $apis)
-        local names=$apis/"$api"/requests
-        local name=$(select_dir "Select case name: " $names)
-        echo "Call $api, for $name name"
-        local varsToUse=$(select_files "Select vars (TAB to select multiple): " $vars)
+        existing_space_api_menu "$space" "$env" "$api_name"
+    }
+    # SPACES/SN/APIS/AN/REQUESTS/NEW_VAR
+    function new_space_api_req_menu() {
+        local space=$1
+        local env=$2
+        local api=$3
+        echo "/$space/API/$api: NEW REQUESTS'S NAME: "
+        read req_name
+        local template_name=$(<"$root_api_path/$space/api/$api/.template_name")
+        mkdir -p "$root_api_path/$space/api/$api_name/requests/$req_name"
+        cp -r "$root_templates_path/$template_name/.request_template"/* "$root_api_path/$space/api/$api/requests/$req_name"
+        existing_space_api_req_menu "$space" "$env" "$api" "$req_name"
+    }
+    # CALL
+    function call_space_env_api_request() {
+        local space=$1
+        local env=$2
+        local api=$3
+        local req=$4
+        local varsToUse=$(select_files "SELECT VARS (TAB FOR MULTI): " "$root_api_path/$space/envs/$env")
         local lines=("${(f)varsToUse}")
         for line in "${lines[@]}";do
-            echo "$vars/$line"
-            source "$vars/$line"
+            echo "$root_api_path/$space/envs/$env/$line"
+            source "$root_api_path/$space/envs/$env/$line"
         done
-        NAME=$name /bin/bash $apis/$api/script.sh
-        nvim $apis/$api/responses/$name/body $apis/$api/responses/$name/headers
-    elif [[ $selected_type == "switch space and environment" ]]; then
-        _zsh_highlight() {}
-        if ! space=$(select_dir "Select space: " "$spaces"); then; return; fi
-        export API_SPACE=$space
-        local envs=$HOME/notes/apis/$space/envs
-        if ! env=$(select_dir "Select environment: " "$envs"); then; return; fi
+        NAME=$req /bin/bash "$root_api_path/$space/api/$api/script.sh"
+        nvim "$root_api_path/$space/api/$api/responses/$req"
+    }
+
+    # SPACES/SN/APIS/AN/REQUESTS/RN
+    function existing_space_api_req_menu() {
+        local space=$1
+        local env=$2
+        local api=$3
+        local req=$4
+        local options=('< BACK' 'UPDATE (NVIM)' 'CALL')
+        local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api/REQUESTS/$req" "${options[@]}")
+        case "$opt" in
+            '< BACK') space_api_reqs_menu "$space" "$env" "$api" ;;
+            'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api/requests/$req" && nvim ;;
+            'CALL') call_space_env_api_request "$space" "$env" "$api" "$req" 
+        ;;
+        esac
+    }
+    # SPACES/SN/APIS/AN/REQUESTS
+    function space_api_reqs_menu() {
+        local space=$1
+        local env=$2
+        local api=$3
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
+        local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') existing_space_api_menu "$space" "$env" "$api" ;;
+            'NEW') new_space_api_req_menu "$space" "$env" "$api" ;;
+            *) [[ -n "$opt" ]] && existing_space_api_req_menu "$space" "$env" "$api" "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
+    # SPACES/SN/APIS/AN
+    function existing_space_api_menu() {
+        local space=$1
+        local env=$2
+        local api=$3
+        local options=('< BACK' 'UPDATE (NVIM)' 'REQUESTS')
+        local opt=$(select_option "OPTIONS > " "/$space[$env]/APIS/$api" "${options[@]}")
+        case "$opt" in
+            '< BACK') space_apis_menu "$space" "$env" ;;
+            'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api" && nvim ;;
+            'REQUESTS') space_api_reqs_menu $space $env $api ;;
+        esac
+    }
+    # SPACES/SN/APIS
+    function space_apis_menu() {
+        local space=$1
+        local env=$2
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_api_path/$space/api" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local opt=$(select_option "APIS > " "/$space [$env]/APIS" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') existing_space_env_menu "$space" "$env" ;;
+            'NEW') new_space_api_menu "$space" "$env" ;;
+            *) [[ -n "$opt" ]] && existing_space_api_menu "$space" "$env" "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
+    # SPACES/SN/ENVS/EN/VARS/VN
+    function existing_space_env_vars_menu() {
+        local space=$1
+        local env=$2
+        local var=$3
+        local options=('< BACK' 'UPDATE (NVIM)')
+        local opt=$(select_option "OPTIONS > " "/$space [$env]/VARS/$var" "${options[@]}")
+        case "$opt" in
+            '< BACK') space_env_vars_menu "$space" "$env" ;;
+            'UPDATE (NVIM)') cd "$root_api_path/$space/envs/$env/$var" && nvim ;;
+        esac
+    }
+    # SPACES/SN/ENVS/EN/VARS
+    function space_env_vars_menu() {
+        local space=$1
+        local env=$2
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_api_path/$space/envs/$env" -maxdepth 1 -mindepth 1 -printf "- %f\n")
+        local opt=$(select_option "VARS > " "/$space [$env]/VARS" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') existing_space_env_menu "$space" "$env" ;;
+            'NEW') new_space_env_var_menu "$space" "$env" ;;
+            *) [[ -n "$opt" ]] && existing_space_env_vars_menu "$space" "$env" "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
+    # SPACES/SN/ENVS/EN
+    function existing_space_env_menu() {
+        local space=$1
+        local env=$2
         export API_ENV=$env
-        echo "Use $space, for $env environment"
-    elif [[ $selected_type == "add api" ]]; then
-        _zsh_highlight() {}
-        echo "Enter api name: "
-        read api_name
-        local folder=$apis/"$api_name"
-        mkdir -p $folder
-        mkdir -p $folder/requests/default
-        mkdir -p $folder/responses/default
-
-        echo "Content-Type: application/json" > "$folder"/requests/default/headers
-        echo '{}' > "$folder"/requests/default/body
-
-        cat <<EOF >> $folder/before.sh
-# save history
-DIR=\$(dirname "\$0")
-DT="\$(date +%s)"
-mv "\$DIR/responses/\$NAME/body" "\$DIR/responses/\$NAME/\$DT.response"
-mv "\$DIR/responses/\$NAME/headers" "\$DIR/responses/\$NAME/\$DT.headers"
-# do stuff
-# varValue=\$(jq -r '.value' < \$DIR/../<API_NAME>/responses/\$NAME/body)
-# sed "s/{{var}}/\$varValue/g" "\$DIR/requests/\$NAME/body.template" > "\$DIR/requests/\$NAME/body"
-# sed "s/{{var}}/\$token/g" "\$DIR/requests/\$NAME/headers.template" > "\$DIR/requests/\$NAME/headers"
-EOF
-
-    cat <<EOF >> $folder/after.sh
-EOF
-
-    cat <<EOF >> $folder/script.sh
-#!/bin/bash
-DIR=\$(dirname "\$0")
-/bin/bash \$DIR/before.sh
-METHOD=<SET METHOD>
-URL=<SET URL>
-
-curl -X \$METHOD \\
-  --header @"\$DIR/requests/\$NAME/headers" \\
-  -d @"\$DIR/requests/\$NAME/body" \\
-  -o "\$DIR/responses/\$NAME/body" \\
-  -D "\$DIR/responses/\$NAME/headers" \\
-  "\$URL"
-
-/bin/bash \$DIR/after.sh
-EOF
-    
-    chmod +x "$folder"/before.sh
-    chmod +x "$folder"/after.sh
-    chmod +x "$folder"/script.sh
-
-    nvim "$folder"/script.sh
-
-    if [[ $? -eq 0 ]]; then
-        sync_notes
-        disown
+        local options=('< BACK' 'UPDATE (NVIM)' 'APIS' 'VARS')
+        local opt=$(select_option "OPTIONS > " "/$space [$env]" "${options[@]}")
+        case "$opt" in
+            '< BACK') space_envs_menu "$space" ;;
+            'UPDATE (NVIM)') cd "$root_api_path/$space/envs/$env" && nvim ;;
+            'APIS') space_apis_menu "$space" "$env" ;;
+            'VARS') space_env_vars_menu "$space" "$env" ;;
+        esac
+    }
+    # SPACES/SN/ENVS
+    function space_envs_menu() {
+        local space=$1
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_api_path/$space/envs" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local opt=$(select_option "ENVS > " "/$space/ENVS" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') existing_space_menu "$space" ;;
+            'NEW') new_space_env_menu "$space" ;;
+            *) [[ -n "$opt" ]] && existing_space_env_menu "$space" "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
+    # SPACES/SN
+    function existing_space_menu() {
+        local space=$1
+        export API_SPACE=$space
+        local options=('< BACK' 'UPDATE (NVIM)' 'ENVS')
+        local opt=$(select_option "OPTIONS > " "/$space" "${options[@]}")
+        case "$opt" in
+            '< BACK') spaces_menu ;;
+            'UPDATE (NVIM)') cd "$root_api_path/$space" && nvim ;;
+            'ENVS') space_envs_menu "$space" ;;
+        esac
+    }
+    # SPACES
+    function spaces_menu() {
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_api_path" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local opt=$(select_option "SPACES > " "/" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') api_root ;;
+            'NEW') new_space_menu ;;
+            *) [[ -n "$opt" ]] && existing_space_menu "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
+    # TEMPLATES/TN
+    function existing_template_menu() {
+        local template=$1
+        local options=('< BACK' 'UPDATE (NVIM)')
+        local opt=$(select_option "OPTIONS > " "#$template" "${options[@]}")
+        case "$opt" in
+            '< BACK') spaces_menu ;;
+            'UPDATE (NVIM)') cd "$root_templates_path/$template" && nvim ;;
+        esac
+    }
+    # TEMAPLATES
+    function templates_menu() {
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local opt=$(select_option "TEMPLATES > " "#" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') api_root ;;
+            'NEW') new_template_menu ;;
+            *) [[ -n "$opt" ]] && existing_template_menu "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
+    # ROOT
+    function api_root() {
+        local options=('SPACES' 'API TEMPLATES')
+        local opt=$(select_option "SPACES > " "/" "${options[@]}")
+        case "$opt" in
+            'SPACES') spaces_menu ;;
+            'API TEMPLATES') templates_menu ;;
+        esac
+    }
+    if [[ -n "$API_SPACE" && -n "$API_ENV" ]]; then
+        existing_space_env_menu $API_SPACE $API_ENV
+    elif [[ -n "$API_SPACE" && -z "$API_ENV" ]]; then
+        existing_space_menu $API_SPACE
     else
-        rm -r $folder
+        api_root
     fi
-    elif [[ $selected_type == "add case name" ]]; then
-        local apis=$HOME/notes/apis/$API_SPACE/api
-        local api=$(select_dir "Select api to which add new case: " $apis)
-        echo "Enter case name: "
-        read case_name
-        mkdir -p $apis/$api/requests/$case_name
-        touch $apis/$api/requests/$case_name/body
-        touch $apis/$api/requests/$case_name/headers
-        nvim $apis/api/$api/requests/$case_name/body $apis/$api/requests/$case_name/headers
-        if [[ $? -eq 0 ]]; then
-            sync_notes
-            disown
-        else
-            rm -r $apis/$api/requests/$case_name
-        fi
-    elif [[ $selected_type == "add space" ]]; then
-        echo "Enter space name: "
-        read space_name
-        mkdir -p $spaces/$space_name
-        mkdir -p $spaces/$space_name/envs
-        mkdir -p $spaces/$space_name/api
-        export API_SPACE=$space_name
-        sync_notes
-    elif [[ $selected_type == "add environment" ]]; then
-        echo "Enter env name: "
-        read env_name
-        mkdir -p $envs/$env_name
-        touch $envs/$env_name/base.env
-        nvim $envs/$env_name/base.env
-        if [[ $? -eq 0 ]]; then
-            export API_ENV=$env_name
-            sync_notes
-            disown
-        else
-            rm -r $envs/$env_name
-        fi
-    elif [[ $selected_type == "add vars to environment" ]]; then
-        echo "Enter env vars name (without .env): "
-        read env_name
-        touch $envs/$API_ENV/$env_name.env
-        nvim $envs/$API_ENV/$env_name.env
-        sync_notes
-    fi
+
+    unset -f api_root
 }
+
 
