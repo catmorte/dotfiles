@@ -336,6 +336,21 @@ function run_api() {
         existing_space_api_menu "$space" "$env" "$api_name"
     }
     # SPACES/SN/APIS/AN/REQUESTS/NEW_VAR
+    function new_space_api_req_from_existing_menu() {
+        local space=$1
+        local env=$2
+        local api=$3
+        local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
+        local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${existing[@]}")
+        local existing_req=$(echo "$opt" | sed 's/- //g')
+        echo "/$space/API/$api: NEW REQUESTS'S NAME: "
+        read req_name
+        local template_name=$(<"$root_api_path/$space/api/$api/.template_name")
+        mkdir -p "$root_api_path/$space/api/$api_name/requests/$req_name"
+        cp -r "$root_api_path/$space/api/$api/requests/$existing_req"/. "$root_api_path/$space/api/$api/requests/$req_name"
+        existing_space_api_req_menu "$space" "$env" "$api" "$req_name"
+    }
+    # SPACES/SN/APIS/AN/REQUESTS/NEW_VAR
     function new_space_api_req_menu() {
         local space=$1
         local env=$2
@@ -382,12 +397,13 @@ function run_api() {
         local space=$1
         local env=$2
         local api=$3
-        local options=('< BACK' 'NEW')
+        local options=('< BACK' 'NEW' 'COPY EXISTING')
         local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
         local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${options[@]}" "${existing[@]}")
         case "$opt" in
             '< BACK') existing_space_api_menu "$space" "$env" "$api" ;;
             'NEW') new_space_api_req_menu "$space" "$env" "$api" ;;
+            'COPY EXISTING') new_space_api_req_from_existing_menu "$space" "$env" "$api" ;;
             *) [[ -n "$opt" ]] && existing_space_api_req_menu "$space" "$env" "$api" "$(echo "$opt" | sed 's/- //g')"  ;;
         esac
     }
