@@ -325,9 +325,9 @@ function run_api() {
             *) [[ -n "$opt" ]] && {
                 local template_name=$(echo "$opt" | sed 's/- //g')
                 mkdir -p "$root_api_path/$space/api/$api_name"
-                cp -r "$root_templates_path/$template_name"/* "$root_api_path/$space/api/$api_name"
+                cp -ar "$root_templates_path/$template_name"/. "$root_api_path/$space/api/$api_name"
                 mkdir -p "$root_api_path/$space/api/$api_name/requests/default"
-                cp -r "$root_templates_path/$template_name/.request_template"/* "$root_api_path/$space/api/$api_name/requests/default"
+                cp -ar "$root_templates_path/$template_name/.request_template"/. "$root_api_path/$space/api/$api_name/requests/default"
                 echo "$template_name" > "$root_api_path/$space/api/$api_name/.template_name"
                 cd "$root_api_path/$space/api/$api_name" && nvim
             } ;;
@@ -344,7 +344,7 @@ function run_api() {
         read req_name
         local template_name=$(<"$root_api_path/$space/api/$api/.template_name")
         mkdir -p "$root_api_path/$space/api/$api_name/requests/$req_name"
-        cp -r "$root_templates_path/$template_name/.request_template"/* "$root_api_path/$space/api/$api/requests/$req_name"
+        cp -r "$root_templates_path/$template_name/.request_template"/. "$root_api_path/$space/api/$api/requests/$req_name"
         existing_space_api_req_menu "$space" "$env" "$api" "$req_name"
     }
     # CALL
