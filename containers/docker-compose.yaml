@@ -1,0 +1,5 @@
+services:
+  decrypt-jwe:
+    build:
+      context: .
+      dockerfile: jwe-decoder.dockerfile
