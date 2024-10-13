@@ -262,6 +262,7 @@ function tmuxgtcl_list() {
 function run_api() {
     local root_api_path=$HOME/notes/apis/spaces/
     local root_templates_path=$HOME/notes/apis/templates/
+    local root_stash_path=$HOME/notes/apis/stash/
     # NEW_SPACE
     function new_space_menu() {
         echo "SPACE'S NAME: "
@@ -270,6 +271,13 @@ function run_api() {
         mkdir -p $root_api_path/$space_name/envs
         mkdir -p $root_api_path/$space_name/api
         existing_space_menu "$space_name"
+    }
+    function new_stash_menu() {
+        echo "STASH'S NAME: "
+        read stash_name
+        touch "$root_stash_path/$stash_name"
+        cd "$root_stash_path/$stash_name" && nvim  
+        existing_stash_menu "$stash_name"
     }
     function new_template_menu() {
         echo "TEMPLATE'S NAME: "
@@ -351,8 +359,7 @@ function run_api() {
             echo "$root_api_path/$space/envs/$env/$line"
             source "$root_api_path/$space/envs/$env/$line"
         done
-        NAME=$req /bin/bash "$root_api_path/$space/api/$api/script.sh"
-        nvim "$root_api_path/$space/api/$api/responses/$req"
+        NAME=$req . "$root_api_path/$space/api/$api/script.sh"
     }
 
     # SPACES/SN/APIS/AN/REQUESTS/RN
@@ -505,13 +512,35 @@ function run_api() {
             *) [[ -n "$opt" ]] && existing_template_menu "$(echo "$opt" | sed 's/- //g')"  ;;
         esac
     }
+    # STASH/SN
+    function existing_stash_menu() {
+        local stashed=$1
+        local options=('< BACK' 'UPDATE (NVIM)')
+        local opt=$(select_option "OPTIONS > " "_$stashed" "${options[@]}")
+        case "$opt" in
+            '< BACK') spaces_menu ;;
+            'UPDATE (NVIM)') cd "$root_stash_path" && nvim $stashed ;;
+        esac
+    }
+    # STASH
+    function stash_menu() {
+        local options=('< BACK' 'NEW')
+        local existing=$(find "$root_stash_path" -maxdepth 1 -mindepth 1  -printf "- %f\n")
+        local opt=$(select_option "STASH > " "_" "${options[@]}" "${existing[@]}")
+        case "$opt" in
+            '< BACK') api_root ;;
+            'NEW') new_stash_menu ;;
+            *) [[ -n "$opt" ]] && existing_stash_menu "$(echo "$opt" | sed 's/- //g')"  ;;
+        esac
+    }
     # ROOT
     function api_root() {
-        local options=('SPACES' 'API TEMPLATES')
+        local options=('SPACES' 'API TEMPLATES' 'STASH')
         local opt=$(select_option "SPACES > " "/" "${options[@]}")
         case "$opt" in
             'SPACES') spaces_menu ;;
             'API TEMPLATES') templates_menu ;;
+            'STASH') stash_menu ;;
         esac
     }
     if [[ -n "$API_SPACE" && -n "$API_ENV" ]]; then
@@ -525,4 +554,16 @@ function run_api() {
     unset -f api_root
 }
 
+#save to api stash
+function save_api_stash () {
+    local stash_name=$1
+    shift
+    local root_stash_path=$HOME/notes/apis/stash/
+    printf $@ > $root_stash_path/$stash_name
+}
 
+function get_api_stash () {
+    local stash_name=$1
+    local root_stash_path=$HOME/notes/apis/stash/
+    cat $root_stash_path/$stash_name
+}
