@@ -288,10 +288,12 @@ function run_api() {
         touch "$root_templates_path/$template_name/before.sh"
         touch "$root_templates_path/$template_name/after.sh"
         touch "$root_templates_path/$template_name/init.sh"
+        touch "$root_templates_path/$template_name/.request_template/init.sh"
         chmod +x "$root_templates_path/$template_name/script.sh"
         chmod +x "$root_templates_path/$template_name/before.sh"
         chmod +x "$root_templates_path/$template_name/after.sh"
         chmod +x "$root_templates_path/$template_name/init.sh"
+        chmod +x "$root_templates_path/$template_name/.request_template/init.sh"
         cd "$root_templates_path/$template_name" && nvim  
         existing_template_menu "$template_name"
     }
@@ -378,13 +380,20 @@ function run_api() {
         done
         NAME=$req . "$root_api_path/$space/api/$api/script.sh"
     }
-    # INIT
-    function init_space_env_api_request() {
+    # INIT API
+    function init_space_env_api() {
+        local space=$1
+        local env=$2
+        local api=$3
+        . "$root_api_path/$space/api/$api/init.sh"
+    }
+    # INIT API REQ
+    function init_space_env_api_req() {
         local space=$1
         local env=$2
         local api=$3
         local req=$4
-        NAME=$req . "$root_api_path/$space/api/$api/init.sh"
+        NAME=$req . "$root_api_path/$space/api/$api/requests/$req/init.sh"
     }
     # SPACES/SN/APIS/AN/REQUESTS/RN
     function existing_space_api_req_menu() {
@@ -392,13 +401,13 @@ function run_api() {
         local env=$2
         local api=$3
         local req=$4
-        local options=('< BACK' 'UPDATE (NVIM)' 'CALL' 'INIT')
+        local options=( 'CALL' 'INIT REQUEST' 'UPDATE (NVIM)' '< BACK')
         local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api/REQUESTS/$req" "${options[@]}")
         case "$opt" in
             '< BACK') space_api_reqs_menu "$space" "$env" "$api" ;;
             'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api/requests/$req" && nvim ;;
             'CALL') call_space_env_api_request "$space" "$env" "$api" "$req" ;;
-            'INIT') init_space_env_api_request "$space" "$env" "$api" "$req"  
+            'INIT REQUEST') init_space_env_api_req "$space" "$env" "$api" "$req" 
         ;;
         esac
     }
@@ -407,9 +416,9 @@ function run_api() {
         local space=$1
         local env=$2
         local api=$3
-        local options=('< BACK' 'NEW' 'COPY EXISTING')
+        local options=('NEW' 'COPY EXISTING' '< BACK' )
         local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
-        local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_api_menu "$space" "$env" "$api" ;;
             'NEW') new_space_api_req_menu "$space" "$env" "$api" ;;
@@ -422,21 +431,22 @@ function run_api() {
         local space=$1
         local env=$2
         local api=$3
-        local options=('< BACK' 'UPDATE (NVIM)' 'REQUESTS')
+        local options=('REQUESTS' 'INIT API' 'UPDATE (NVIM)'  '< BACK' )
         local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api" "${options[@]}")
         case "$opt" in
             '< BACK') space_apis_menu "$space" "$env" ;;
             'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api" && nvim ;;
             'REQUESTS') space_api_reqs_menu $space $env $api ;;
+            'INIT API') init_space_env_api "$space" "$env" "$api" ;;
         esac
     }
     # SPACES/SN/APIS
     function space_apis_menu() {
         local space=$1
         local env=$2
-        local options=('< BACK' 'NEW')
+        local options=( 'NEW' '< BACK')
         local existing=$(find "$root_api_path/$space/api" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
-        local opt=$(select_option "APIS > " "/$space [$env]/APIS" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "APIS > " "/$space [$env]/APIS" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_env_menu "$space" "$env" ;;
             'NEW') new_space_api_menu "$space" "$env" ;;
@@ -448,7 +458,7 @@ function run_api() {
         local space=$1
         local env=$2
         local var=$3
-        local options=('< BACK' 'UPDATE (NVIM)')
+        local options=( 'UPDATE (NVIM)' '< BACK')
         local opt=$(select_option "OPTIONS > " "/$space [$env]/VARS/$var" "${options[@]}")
         case "$opt" in
             '< BACK') space_env_vars_menu "$space" "$env" ;;
@@ -459,9 +469,9 @@ function run_api() {
     function space_env_vars_menu() {
         local space=$1
         local env=$2
-        local options=('< BACK' 'NEW')
+        local options=( 'NEW' '< BACK')
         local existing=$(find "$root_api_path/$space/envs/$env" -maxdepth 1 -mindepth 1 -printf "- %f\n")
-        local opt=$(select_option "VARS > " "/$space [$env]/VARS" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "VARS > " "/$space [$env]/VARS" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_env_menu "$space" "$env" ;;
             'NEW') new_space_env_var_menu "$space" "$env" ;;
@@ -473,7 +483,7 @@ function run_api() {
         local space=$1
         local env=$2
         export API_ENV=$env
-        local options=('< BACK' 'UPDATE (NVIM)' 'APIS' 'VARS')
+        local options=('APIS' 'VARS' 'UPDATE (NVIM)' '< BACK' )
         local opt=$(select_option "OPTIONS > " "/$space [$env]" "${options[@]}")
         case "$opt" in
             '< BACK') space_envs_menu "$space" ;;
@@ -485,9 +495,9 @@ function run_api() {
     # SPACES/SN/ENVS
     function space_envs_menu() {
         local space=$1
-        local options=('< BACK' 'NEW')
+        local options=( 'NEW' '< BACK')
         local existing=$(find "$root_api_path/$space/envs" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
-        local opt=$(select_option "ENVS > " "/$space [?]" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "ENVS > " "/$space [?]" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_menu "$space" ;;
             'NEW') new_space_env_menu "$space" ;;
@@ -498,7 +508,7 @@ function run_api() {
     function existing_space_menu() {
         local space=$1
         export API_SPACE=$space
-        local options=('< BACK' 'UPDATE (NVIM)' 'ENVS')
+        local options=( 'ENVS' 'UPDATE (NVIM)'  '< BACK')
         local opt=$(select_option "OPTIONS > " "/$space" "${options[@]}")
         case "$opt" in
             '< BACK') spaces_menu ;;
@@ -508,9 +518,9 @@ function run_api() {
     }
     # SPACES
     function spaces_menu() {
-        local options=('< BACK' 'NEW')
+        local options=( 'NEW' '< BACK')
         local existing=$(find "$root_api_path" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
-        local opt=$(select_option "SPACES > " "/" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "SPACES > " "/" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') api_root ;;
             'NEW') new_space_menu ;;
@@ -520,7 +530,7 @@ function run_api() {
     # TEMPLATES/TN
     function existing_template_menu() {
         local template=$1
-        local options=('< BACK' 'UPDATE (NVIM)')
+        local options=('UPDATE (NVIM)' '< BACK' )
         local opt=$(select_option "OPTIONS > " "#$template" "${options[@]}")
         case "$opt" in
             '< BACK') spaces_menu ;;
@@ -529,9 +539,9 @@ function run_api() {
     }
     # TEMAPLATES
     function templates_menu() {
-        local options=('< BACK' 'NEW')
+        local options=('NEW' '< BACK' )
         local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
-        local opt=$(select_option "TEMPLATES > " "#" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "TEMPLATES > " "#" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') api_root ;;
             'NEW') new_template_menu ;;
@@ -541,7 +551,7 @@ function run_api() {
     # STASH/SN
     function existing_stash_menu() {
         local stashed=$1
-        local options=('< BACK' 'UPDATE (NVIM)')
+        local options=('UPDATE (NVIM)' '< BACK' )
         local opt=$(select_option "OPTIONS > " "_$stashed" "${options[@]}")
         case "$opt" in
             '< BACK') spaces_menu ;;
@@ -550,9 +560,9 @@ function run_api() {
     }
     # STASH
     function stash_menu() {
-        local options=('< BACK' 'NEW')
+        local options=('NEW' '< BACK' )
         local existing=$(find "$root_stash_path" -maxdepth 1 -mindepth 1  -printf "- %f\n")
-        local opt=$(select_option "STASH > " "_" "${options[@]}" "${existing[@]}")
+        local opt=$(select_option "STASH > " "_" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') api_root ;;
             'NEW') new_stash_menu ;;
