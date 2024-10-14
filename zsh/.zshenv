@@ -287,9 +287,11 @@ function run_api() {
         touch "$root_templates_path/$template_name/script.sh"
         touch "$root_templates_path/$template_name/before.sh"
         touch "$root_templates_path/$template_name/after.sh"
+        touch "$root_templates_path/$template_name/init.sh"
         chmod +x "$root_templates_path/$template_name/script.sh"
         chmod +x "$root_templates_path/$template_name/before.sh"
         chmod +x "$root_templates_path/$template_name/after.sh"
+        chmod +x "$root_templates_path/$template_name/init.sh"
         cd "$root_templates_path/$template_name" && nvim  
         existing_template_menu "$template_name"
     }
@@ -376,19 +378,27 @@ function run_api() {
         done
         NAME=$req . "$root_api_path/$space/api/$api/script.sh"
     }
-
+    # INIT
+    function init_space_env_api_request() {
+        local space=$1
+        local env=$2
+        local api=$3
+        local req=$4
+        NAME=$req . "$root_api_path/$space/api/$api/init.sh"
+    }
     # SPACES/SN/APIS/AN/REQUESTS/RN
     function existing_space_api_req_menu() {
         local space=$1
         local env=$2
         local api=$3
         local req=$4
-        local options=('< BACK' 'UPDATE (NVIM)' 'CALL')
+        local options=('< BACK' 'UPDATE (NVIM)' 'CALL' 'INIT')
         local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api/REQUESTS/$req" "${options[@]}")
         case "$opt" in
             '< BACK') space_api_reqs_menu "$space" "$env" "$api" ;;
             'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api/requests/$req" && nvim ;;
-            'CALL') call_space_env_api_request "$space" "$env" "$api" "$req" 
+            'CALL') call_space_env_api_request "$space" "$env" "$api" "$req" ;;
+            'INIT') init_space_env_api_request "$space" "$env" "$api" "$req"  
         ;;
         esac
     }
