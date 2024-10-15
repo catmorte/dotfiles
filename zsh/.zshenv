@@ -288,11 +288,13 @@ function run_api() {
         touch "$root_templates_path/$template_name/before.sh"
         touch "$root_templates_path/$template_name/after.sh"
         touch "$root_templates_path/$template_name/init.sh"
+        touch "$root_templates_path/$template_name/request_open.sh"
         touch "$root_templates_path/$template_name/.request_template/init.sh"
         chmod +x "$root_templates_path/$template_name/script.sh"
         chmod +x "$root_templates_path/$template_name/before.sh"
         chmod +x "$root_templates_path/$template_name/after.sh"
         chmod +x "$root_templates_path/$template_name/init.sh"
+        chmod +x "$root_templates_path/$template_name/request_open.sh"
         chmod +x "$root_templates_path/$template_name/.request_template/init.sh"
         cd "$root_templates_path/$template_name" && nvim  
         existing_template_menu "$template_name"
@@ -328,16 +330,17 @@ function run_api() {
         case "$opt" in
             *) [[ -n "$opt" ]] && {
                 local template_name=$(echo "$opt" | sed 's/- //g')
-                mkdir -p "$root_api_path/$space/api/$api_name"
-                cp -ar "$root_templates_path/$template_name"/. "$root_api_path/$space/api/$api_name"
-                mkdir -p "$root_api_path/$space/api/$api_name/requests/default"
-                cp -ar "$root_templates_path/$template_name/.request_template"/. "$root_api_path/$space/api/$api_name/requests/default"
-                echo "$template_name" > "$root_api_path/$space/api/$api_name/.template_name"
-                cd "$root_api_path/$space/api/$api_name" && nvim
+                folder_name="$template_name-$api_name"
+                mkdir -p "$root_api_path/$space/api/$folder_name"
+                cp -ar "$root_templates_path/$template_name"/. "$root_api_path/$space/api/$folder_name"
+                mkdir -p "$root_api_path/$space/api/$folder_name/requests/default"
+                cp -ar "$root_templates_path/$template_name/.request_template"/. "$root_api_path/$space/api/$folder_name/requests/default"
+                echo "$template_name" > "$root_api_path/$space/api/$folder_name/.template_name"
+                cd "$root_api_path/$space/api/$folder_name" && nvim
             } ;;
         esac
 
-        existing_space_api_menu "$space" "$env" "$api_name"
+        existing_space_api_menu "$space" "$env" "$folder_name"
     }
     # SPACES/SN/APIS/AN/REQUESTS/NEW_VAR
     function new_space_api_req_from_existing_menu() {
@@ -385,6 +388,12 @@ function run_api() {
         local space=$1
         local env=$2
         local api=$3
+        local varsToUse=$(select_files "SELECT VARS (TAB FOR MULTI): " "$root_api_path/$space/envs/$env")
+        local lines=("${(f)varsToUse}")
+        for line in "${lines[@]}";do
+            echo "$root_api_path/$space/envs/$env/$line"
+            source "$root_api_path/$space/envs/$env/$line"
+        done
         . "$root_api_path/$space/api/$api/init.sh"
     }
     # INIT API REQ
@@ -393,6 +402,12 @@ function run_api() {
         local env=$2
         local api=$3
         local req=$4
+        local varsToUse=$(select_files "SELECT VARS (TAB FOR MULTI): " "$root_api_path/$space/envs/$env")
+        local lines=("${(f)varsToUse}")
+        for line in "${lines[@]}";do
+            echo "$root_api_path/$space/envs/$env/$line"
+            source "$root_api_path/$space/envs/$env/$line"
+        done
         NAME=$req . "$root_api_path/$space/api/$api/requests/$req/init.sh"
     }
     # SPACES/SN/APIS/AN/REQUESTS/RN
@@ -405,7 +420,7 @@ function run_api() {
         local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api/REQUESTS/$req" "${options[@]}")
         case "$opt" in
             '< BACK') space_api_reqs_menu "$space" "$env" "$api" ;;
-            'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api/requests/$req" && nvim ;;
+            'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api/requests/$req" && . "$root_api_path/$space/api/$api/request_open.sh" $req ;;
             'CALL') call_space_env_api_request "$space" "$env" "$api" "$req" ;;
             'INIT REQUEST') init_space_env_api_req "$space" "$env" "$api" "$req" 
         ;;
