@@ -38,7 +38,7 @@ function select_option() {
     local header=$1
     shift
     opts=("$@")
-    local opt=$(printf "%s\n" "${opts[@]}" | fzf --border=rounded --height 20 --prompt="$prmt" --header="$header" --layout=reverse)
+    local opt=$(printf "%s\n" "${opts[@]}" | fzf --border=rounded --height 20 --prompt="$prmt" --header="$header" --layout=reverse --ansi)
     if [[ -z $opt ]]; then
         exit 0
     fi
@@ -260,6 +260,10 @@ function tmuxgtcl_list() {
 }
 
 function run_api() {
+    local RESET=$(printf "\033[0m")
+    local RED=$(printf "\033[31m")
+    local GREEN=$(printf "\033[32m")
+    local BLUE=$(printf "\033[34m")
     local root_api_path=$HOME/notes/apis/spaces/
     local root_templates_path=$HOME/notes/apis/templates/
     local root_stash_path=$HOME/notes/apis/stash/
@@ -327,7 +331,7 @@ function run_api() {
         local env=$2
         echo "/$space [$env]: API'S NAME: "
         read api_name
-        local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
+        local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "FROM TEMPLATE > " "/$space [$env]/APIS" "${existing[@]}")
         case "$opt" in
             *) [[ -n "$opt" ]] && {
@@ -349,7 +353,7 @@ function run_api() {
         local space=$1
         local env=$2
         local api=$3
-        local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
+        local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${existing[@]}")
         local existing_req=$(echo "$opt" | sed 's/- //g')
         echo "/$space [$env]/APIS/$api: NEW REQUESTS'S NAME: "
@@ -435,7 +439,7 @@ function run_api() {
         local env=$2
         local api=$3
         local options=('NEW' 'COPY EXISTING' '< BACK' )
-        local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "- %f\n")
+        local existing=$(find "$root_api_path/$space/api/$api/requests" -maxdepth 1 -mindepth 1 -type d -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "REQUESTS > " "/$space [$env]/APIS/$api/REQUESTS" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_api_menu "$space" "$env" "$api" ;;
@@ -464,7 +468,7 @@ function run_api() {
         local space=$1
         local env=$2
         local options=( 'NEW' '< BACK')
-        local existing=$(find "$root_api_path/$space/api" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local existing=$(find "$root_api_path/$space/api" -maxdepth 1 -mindepth 1 -type d  -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "APIS > " "/$space [$env]/APIS" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_env_menu "$space" "$env" ;;
@@ -489,7 +493,7 @@ function run_api() {
         local space=$1
         local env=$2
         local options=( 'NEW' '< BACK')
-        local existing=$(find "$root_api_path/$space/envs/$env" -maxdepth 1 -mindepth 1 -printf "- %f\n")
+        local existing=$(find "$root_api_path/$space/envs/$env" -maxdepth 1 -mindepth 1 -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "VARS > " "/$space [$env]/VARS" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_env_menu "$space" "$env" ;;
@@ -515,7 +519,7 @@ function run_api() {
     function space_envs_menu() {
         local space=$1
         local options=( 'NEW' '< BACK')
-        local existing=$(find "$root_api_path/$space/envs" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local existing=$(find "$root_api_path/$space/envs" -maxdepth 1 -mindepth 1 -type d  -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "ENVS > " "/$space [?]" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') existing_space_menu "$space" ;;
@@ -538,7 +542,7 @@ function run_api() {
     # SPACES
     function spaces_menu() {
         local options=( 'NEW' '< BACK')
-        local existing=$(find "$root_api_path" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local existing=$(find "$root_api_path" -maxdepth 1 -mindepth 1 -type d  -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "SPACES > " "/" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') api_root ;;
@@ -559,7 +563,7 @@ function run_api() {
     # TEMAPLATES
     function templates_menu() {
         local options=('NEW' '< BACK' )
-        local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d  -printf "- %f\n")
+        local existing=$(find "$root_templates_path" -maxdepth 1 -mindepth 1 -type d  -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "TEMPLATES > " "#" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') api_root ;;
@@ -580,7 +584,7 @@ function run_api() {
     # STASH
     function stash_menu() {
         local options=('NEW' '< BACK' )
-        local existing=$(find "$root_stash_path" -maxdepth 1 -mindepth 1  -printf "- %f\n")
+        local existing=$(find "$root_stash_path" -maxdepth 1 -mindepth 1  -printf "${GREEN}- %f${RESET}\n")
         local opt=$(select_option "STASH > " "_" "${existing[@]}" "${options[@]}" )
         case "$opt" in
             '< BACK') api_root ;;
