@@ -287,14 +287,14 @@ function run_api() {
         touch "$root_templates_path/$template_name/script.sh"
         touch "$root_templates_path/$template_name/before.sh"
         touch "$root_templates_path/$template_name/after.sh"
-        touch "$root_templates_path/$template_name/init.sh"
+        touch "$root_templates_path/$template_name/utils.sh"
         touch "$root_templates_path/$template_name/request_open.sh"
         touch "$root_templates_path/$template_name/template.sh"
         touch "$root_templates_path/$template_name/.request_template/init.sh"
         chmod +x "$root_templates_path/$template_name/script.sh"
         chmod +x "$root_templates_path/$template_name/before.sh"
         chmod +x "$root_templates_path/$template_name/after.sh"
-        chmod +x "$root_templates_path/$template_name/init.sh"
+        chmod +x "$root_templates_path/$template_name/utils.sh"
         chmod +x "$root_templates_path/$template_name/request_open.sh"
         chmod +x "$root_templates_path/$template_name/template.sh"
         chmod +x "$root_templates_path/$template_name/.request_template/init.sh"
@@ -386,7 +386,7 @@ function run_api() {
         NAME=$req . "$root_api_path/$space/api/$api/script.sh"
     }
     # INIT API
-    function init_space_env_api() {
+    function utils_space_env_api() {
         local space=$1
         local env=$2
         local api=$3
@@ -396,10 +396,10 @@ function run_api() {
             echo "$root_api_path/$space/envs/$env/$line"
             source "$root_api_path/$space/envs/$env/$line"
         done
-        . "$root_api_path/$space/api/$api/init.sh"
+        . "$root_api_path/$space/api/$api/utils.sh"
     }
     # INIT API REQ
-    function init_space_env_api_req() {
+    function utils_space_env_api_req() {
         local space=$1
         local env=$2
         local api=$3
@@ -410,7 +410,7 @@ function run_api() {
             echo "$root_api_path/$space/envs/$env/$line"
             source "$root_api_path/$space/envs/$env/$line"
         done
-        NAME=$req . "$root_api_path/$space/api/$api/requests/$req/init.sh"
+        NAME=$req . "$root_api_path/$space/api/$api/requests/$req/utils.sh"
     }
     # SPACES/SN/APIS/AN/REQUESTS/RN
     function existing_space_api_req_menu() {
@@ -418,13 +418,14 @@ function run_api() {
         local env=$2
         local api=$3
         local req=$4
-        local options=( 'CALL' 'INIT REQUEST' 'UPDATE (NVIM)' '< BACK')
+        export API_REQUEST=$req
+        local options=( 'CALL' 'UTILS' 'UPDATE (NVIM)' '< BACK')
         local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api/REQUESTS/$req" "${options[@]}")
         case "$opt" in
             '< BACK') space_api_reqs_menu "$space" "$env" "$api" ;;
             'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api/requests/$req" && . "$root_api_path/$space/api/$api/request_open.sh" $req ;;
             'CALL') call_space_env_api_request "$space" "$env" "$api" "$req" ;;
-            'INIT REQUEST') init_space_env_api_req "$space" "$env" "$api" "$req" 
+            'UTILS') utils_space_env_api_req "$space" "$env" "$api" "$req" 
         ;;
         esac
     }
@@ -448,13 +449,14 @@ function run_api() {
         local space=$1
         local env=$2
         local api=$3
-        local options=('REQUESTS' 'INIT API' 'UPDATE (NVIM)'  '< BACK' )
+        export API_API=$api
+        local options=('REQUESTS' 'UTILS' 'UPDATE (NVIM)'  '< BACK' )
         local opt=$(select_option "OPTIONS > " "/$space [$env]/APIS/$api" "${options[@]}")
         case "$opt" in
             '< BACK') space_apis_menu "$space" "$env" ;;
             'UPDATE (NVIM)') cd "$root_api_path/$space/api/$api" && nvim ;;
             'REQUESTS') space_api_reqs_menu $space $env $api ;;
-            'INIT API') init_space_env_api "$space" "$env" "$api" ;;
+            'UTILS') utils_space_env_api "$space" "$env" "$api" ;;
         esac
     }
     # SPACES/SN/APIS
@@ -596,9 +598,13 @@ function run_api() {
             'STASH') stash_menu ;;
         esac
     }
-    if [[ -n "$API_SPACE" && -n "$API_ENV" ]]; then
+    if [[ -n "$API_SPACE" && -n "$API_ENV" && -n "$API_API" && -n "$API_REQUEST" ]]; then
+        existing_space_api_req_menu $API_SPACE $API_ENV $API_API $API_REQUEST
+    elif [[ -n "$API_SPACE" && -n "$API_ENV" && -n "$API_API" ]]; then
+        existing_space_api_menu $API_SPACE $API_ENV $API_API
+    elif [[ -n "$API_SPACE" && -n "$API_ENV" ]]; then
         existing_space_env_menu $API_SPACE $API_ENV
-    elif [[ -n "$API_SPACE" && -z "$API_ENV" ]]; then
+    elif [[ -n "$API_SPACE" ]]; then
         existing_space_menu $API_SPACE
     else
         api_root
