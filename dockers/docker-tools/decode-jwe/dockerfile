@@ -1,0 +1,17 @@
+# Use the official Python image from the Docker Hub
+FROM python:3.11-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Install required packages
+RUN pip install --no-cache-dir cryptography python-jose
+
+COPY index.py index.py
+
+# Command to run the script with arguments
+ENTRYPOINT  ["python", "index.py"]
+
+# docker-compose run --build --no-deps --rm decrypt-jwe --private_key_string "your_private_key" --jwe_string "your_jwe_string"
+# docker run --rm decrypt-jwe --private_key_string "your_private_key" --jwe_string "your_jwe_string"
+

@@ -310,9 +310,9 @@ function run_api() {
         local space=$1
         echo "/$space: NEW ENV'S NAME: "
         read env_name
-        mkdir -p "$envs/$env_name"
-        touch "$envs/$env_name/base.env"
-        cd "$envs/$env_name" && nvim "$envs/$env_name/base.env"
+        mkdir -p "$root_api_path/$space/envs/$env_name"
+        touch "$root_api_path/$space/envs/$env_name/base.env"
+        cd "$root_api_path/$space/envs/$env_name" && nvim "$root_api_path/$space/envs/$env_name/base.env"
         existing_space_env_menu "$space" "$env_name"
     }
     # SPACES/SN/ENVS/EN/VARS/NEW_VAR

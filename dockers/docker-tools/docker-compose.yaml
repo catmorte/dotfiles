@@ -1,0 +1,10 @@
+services:
+  decrypt-jwe:
+    build:
+      context: ./decode-jwe
+      dockerfile: ./dockerfile
+  jdbc-generic:
+    build:
+      context: ./jdbc-generic
+      dockerfile: ./dockerfile
+    network_mode: host

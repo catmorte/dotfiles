@@ -1,0 +1,37 @@
+# Step 1: Build the application using a JDK
+FROM openjdk:11-jdk-slim AS build
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the Java source file (index.java) from the root directory
+COPY index.java /app/
+
+# Copy the JSON library and other dependencies
+COPY libs/ /app/lib/
+
+# Compile the Java source code
+RUN javac -cp "lib/*" -d /app/build/ /app/index.java
+
+# Package the compiled classes into a JAR file
+RUN jar cf /app/index.jar -C /app/build/ .
+
+# Step 2: Create a new, minimal image for running the application
+FROM openjdk:11-jre-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the JAR file from the build stage
+COPY --from=build /app/index.jar /app/index.jar
+
+# Copy the JDBC drivers and dependencies
+COPY libs/ /app/lib/
+
+# Add all the libraries (JDBC drivers, JSON library) to the classpath
+ENV CLASSPATH="/app/lib/*:/app/index.jar"
+
+# Command to run the JAR with arguments passed during docker run
+ENTRYPOINT ["java", "index"]
+
+# docker run jdbc-json-app "jdbc:mysql://localhost:3306/mydatabase" "your_username" "your_password" "SELECT * FROM mytable"
