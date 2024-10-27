@@ -8,3 +8,11 @@ services:
       context: ./jdbc-generic
       dockerfile: ./dockerfile
     network_mode: host
+  it-tools:
+    image: corentinth/it-tools
+    container_name: it-tools
+    ports:
+      - "8080:80"
+    stdin_open: true
+    tty: true
+    network_mode: none
