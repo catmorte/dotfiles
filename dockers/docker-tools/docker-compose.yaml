@@ -15,4 +15,3 @@ services:
       - "8080:80"
     stdin_open: true
     tty: true
-    network_mode: none
