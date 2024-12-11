@@ -1,0 +1,30 @@
+services:
+  freshrss:
+    image: freshrss/freshrss
+    container_name: freshrss
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Paris"
+      CRON_MIN: "1,31"
+    ports:
+      - "8881:80"
+    volumes:
+      - freshrss_data:/var/www/FreshRSS/data
+      - freshrss_extensions:/var/www/FreshRSS/extensions
+    logging:
+      options:
+        max-size: "10m"
+
+volumes:
+  freshrss_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ~/freshrss_data
+      o: bind
+  freshrss_extensions:
+    driver: local
+    driver_opts:
+      type: none
+      device: ~/freshrss_extensions
+      o: bind

@@ -1,0 +1,25 @@
+services:
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: it-tools
+    ports:
+      - "8880:80"
+    stdin_open: true
+    tty: true
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - 9443:9443
+      - 9000:9000
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+volumes:
+  portainer_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ~/portainer_data
