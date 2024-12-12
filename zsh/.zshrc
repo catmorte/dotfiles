@@ -26,7 +26,7 @@ bindkey '^Xe' edit-command-line
 bindkey -s '^o' 'yy\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^o' 'yy\n'
-bindkey -s '^e' 'fim\n'
+bindkey -s '^e' 'nvim\n'
 bindkey -s '^a' 'tmux attach\n'
 bindkey -s '^n' 'run_remarks\n'
 bindkey -s '^p' 'run_secrets\n'

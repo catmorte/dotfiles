@@ -26,7 +26,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  
 
 # aliases
-alias fim='nvim $(fzf -m --preview="bat --color=always {}")'
 alias ls='eza --color=auto'
 alias pbcopy="xclip -sel clip"
 alias pbpaste="xclip -o -sel clip"

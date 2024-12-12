@@ -11,6 +11,12 @@ vim.cmd "set guicursor+=a:blinkon1"
 vim.g.tabby_trigger_mode = "manual"
 vim.g.tabby_keybinding_accept = "<C-l>"
 vim.g.tabby_keybinding_trigger_or_dismiss = "<C-e>"
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    if vim.fn.argv(0) == "" then require("telescope.builtin").find_files() end
+  end,
+})
+
 -- vim.filetype.add {
 --   extension = {
 --     foo = "fooscript",
