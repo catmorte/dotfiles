@@ -34,4 +34,5 @@ tabby
 ollama
 jless
 gtt
+navi
 ```
