@@ -42,3 +42,5 @@ case 'uname' in
   ;;
 esac
 
+eval "$(navi widget zsh)"
+
