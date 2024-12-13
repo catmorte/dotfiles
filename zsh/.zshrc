@@ -3,8 +3,8 @@ autoload edit-command-line
 
 ZSH_THEME="robbyrussell"
 HISTFILE="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/history"
-HISTSIZE=1000000
-SAVEHIST=1000000
+HISTSIZE=1000
+SAVEHIST=1000
 
 
 
