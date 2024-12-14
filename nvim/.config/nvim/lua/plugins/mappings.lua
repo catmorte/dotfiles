@@ -15,6 +15,10 @@ return {
           ["<Leader>xE"] = { ":.!base64 <cr>", desc = "base64 Encode" },
           ["<Leader>xJ"] = { ":.!jq .<cr>", desc = "JQ Format file" },
           ["<Leader>xl"] = { ":execute 'split | terminal' getline('.')<CR>", desc = "Exec line to split pane" },
+          ["<Leader>fA"] = {
+            ':lua require("telescope").extensions.live_grep_args.live_grep_args()<CR>',
+            desc = "Find text (args)",
+          },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },

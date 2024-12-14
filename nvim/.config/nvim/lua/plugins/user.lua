@@ -152,4 +152,15 @@ return {
   { "AlexvZyl/nordic.nvim", lazy = true, opts = {} },
   { "olimorris/onedarkpro.nvim", lazy = true, opts = { options = { highlight_inactive_windows = true } } },
   { "folke/tokyonight.nvim", lazy = true },
+  {
+    "nvim-telescope/telescope-live-grep-args.nvim",
+    lazy = true,
+    specs = {
+      {
+        "nvim-telescope/telescope.nvim",
+        dependencies = { "nvim-telescope/telescope-live-grep-args.nvim" },
+        opts = function() require("telescope").load_extension "live_grep_args" end,
+      },
+    },
+  },
 }
