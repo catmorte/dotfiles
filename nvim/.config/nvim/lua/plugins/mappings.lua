@@ -19,6 +19,10 @@ return {
             ':lua require("telescope").extensions.live_grep_args.live_grep_args()<CR>',
             desc = "Find text (args)",
           },
+          ["<Leader>xs"] = {
+            '<cmd>lua require("switch_case").switch_case()<CR>',
+            desc = "Snake case to camel case",
+          },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
