@@ -20,7 +20,7 @@ return {
             desc = "Find text (args)",
           },
           ["<Leader>xs"] = {
-            '<cmd>lua require("switch_case").switch_case()<CR>',
+            '<cmd>lua require("plugins.switch_case").switch_case()<CR>',
             desc = "Snake case to camel case",
           },
         },
