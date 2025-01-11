@@ -23,6 +23,8 @@ return {
             '<cmd>lua require("plugins.switch_case").switch_case()<CR>',
             desc = "Snake case to camel case",
           },
+          ["<Leader>xn"] = { ":OpenNotes<CR>", desc = "Notes: open" },
+          ["<Leader>xa"] = { ":CreateNote<CR>", desc = "Notes: new note" },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
