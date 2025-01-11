@@ -17,4 +17,4 @@ end
 
 require "lazy_setup"
 require "polish"
-require "plugins.switch_case"
+-- require "plugins.switch_case"
