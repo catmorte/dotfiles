@@ -75,7 +75,7 @@ symbol = "-"
 
 [cmd_duration]
 format = " took [$duration]($style)"
-show_notifications = true
+show_notifications = false
 min_time_to_notify = 60_000
 
 [env_var.WSL_DISTRO_NAME]
@@ -169,7 +169,7 @@ symbol = "ﯣ "
 [os]
 format = "[($name )]($style)"
 style = "fg:#8be9fd"
-disabled = false  # Disaled by default
+disabled = false              # Disaled by default
 
 [directory.substitutions]
 "Documents" = "󰈙 "

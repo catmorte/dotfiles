@@ -64,7 +64,7 @@ return {
 
   { import = "astrocommunity.pack.full-dadbod" },
 
-  { import = "astrocommunity.completion.tabby-nvim" },
+  -- { import = "astrocommunity.completion.tabby-nvim" },
 
   { import = "astrocommunity.motion.mini-surround" },
 }
