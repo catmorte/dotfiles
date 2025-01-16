@@ -24,7 +24,7 @@ return {
             desc = "Snake case to camel case",
           },
           ["<Leader>xn"] = { ":OpenNotes<CR>", desc = "Notes: open" },
-          ["<Leader>xa"] = { ":CreateNote<CR>", desc = "Notes: new note" },
+          ["<Leader>xN"] = { ":CreateNote<CR>", desc = "Notes: new note" },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
@@ -53,6 +53,7 @@ return {
             desc = "Hover symbol details",
           },
           ["<Leader>xt"] = { ":GoTestAdd<CR>", desc = "Add go test" },
+          ["gE"] = { ":GoplsImplementation<CR>", desc = "Go Implementations" },
         },
       },
     },
