@@ -54,6 +54,10 @@ return {
           },
           ["<Leader>xt"] = { ":GoTestAdd<CR>", desc = "Add go test" },
           ["gE"] = { ":GoplsImplementation<CR>", desc = "Go Implementations" },
+          ["gC"] = {
+            '<cmd>lua require("plugins.lsp_references").lsp_references()<CR>',
+            desc = "Go to caller",
+          },
         },
       },
     },
