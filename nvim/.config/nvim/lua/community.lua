@@ -53,8 +53,6 @@ return {
 
   { import = "astrocommunity.markdown-and-latex.glow-nvim" },
 
-  { import = "astrocommunity.note-taking.global-note-nvim" },
-
   { import = "astrocommunity.programming-language-support.rest-nvim" },
 
   { import = "astrocommunity.split-and-window.minimap-vim" },

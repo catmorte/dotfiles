@@ -5,6 +5,7 @@ return {
     opts = {
       mappings = {
         n = {
+          ["<Leader>n"] = { desc = "Notes" },
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
           ["<Leader>o"] = { desc = "Ollama" },
 
@@ -23,8 +24,8 @@ return {
             '<cmd>lua require("plugins.switch_case").switch_case()<CR>',
             desc = "Snake case to camel case",
           },
-          ["<Leader>xn"] = { ":OpenNotes<CR>", desc = "Notes: open" },
-          ["<Leader>xN"] = { ":CreateNote<CR>", desc = "Notes: new note" },
+          ["<Leader>no"] = { ":OpenNotes<CR>", desc = "Notes: open" },
+          ["<Leader>nc"] = { ":CreateNote<CR>", desc = "Notes: new note" },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
@@ -53,11 +54,7 @@ return {
             desc = "Hover symbol details",
           },
           ["<Leader>xt"] = { ":GoTestAdd<CR>", desc = "Add go test" },
-          ["gE"] = { ":GoplsImplementation<CR>", desc = "Go Implementations" },
-          ["gC"] = {
-            '<cmd>lua require("plugins.lsp_references").lsp_references()<CR>',
-            desc = "Go to caller",
-          },
+          ["<Leader>lE"] = { ":GoplsImplementation<CR>", desc = "Go Implementations" },
         },
       },
     },
