@@ -5,11 +5,12 @@ return {
     opts = {
       mappings = {
         n = {
-          ["<Leader>n"] = { desc = "Notes" },
+          ["<Leader>N"] = { desc = "Notes" },
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
           ["<Leader>o"] = { desc = "Ollama" },
-
           ["<Leader>x"] = { desc = "Misc" },
+          ["<Leader>xa"] = { desc = "Api" },
+          ["<Leader>xac"] = { ":CallMarkdownApi<cr>", desc = "call" },
           ["<Leader>xp"] = { ":call setreg('+', expand('%:p'))<cr>", desc = "PWD" },
           ["<Leader>xc"] = { ":!chmod +x %<cr>", desc = "Make executable" },
           ["<Leader>xD"] = { ":.!base64 -d<cr>", desc = "base64 Decode" },
@@ -24,8 +25,8 @@ return {
             '<cmd>lua require("plugins.switch_case").switch_case()<CR>',
             desc = "Snake case to camel case",
           },
-          ["<Leader>no"] = { ":OpenNotes<CR>", desc = "Notes: open" },
-          ["<Leader>nc"] = { ":CreateNote<CR>", desc = "Notes: new note" },
+          ["<Leader>No"] = { ":OpenNotes<CR>", desc = "Notes: open" },
+          ["<Leader>Nc"] = { ":CreateNote<CR>", desc = "Notes: new note" },
         },
         v = {
           ["<Leader>om"] = { ":Gen<CR>", desc = "Menu" },
