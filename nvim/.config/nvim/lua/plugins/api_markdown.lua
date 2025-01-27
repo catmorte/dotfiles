@@ -158,7 +158,7 @@ local function parseMarkdown(s)
       i = i + skip
       file.comps = comps
     elseif lines[i] == "## after" then
-      local skip, after = parseText(lines, i + 1)
+      local skip, after = parseComps(lines, i)
       i = i + skip
       file.after = after
     elseif lines[i]:match "^## type" then
@@ -198,7 +198,17 @@ end
 
 -- Select all fields from the vars table
 local function select_all_fields(vars, callback)
+  local current_buf = vim.api.nvim_get_current_buf()
+  local filepath = vim.api.nvim_buf_get_name(current_buf)
+
+  if filepath == "" then
+    print "Current buffer is not associated with a file."
+    return -- Or handle this case differently (e.g., prompt for a filename)
+  end
+
+  local curdir = vim.fn.fnamemodify(filepath, ":h") -- Get the directory part
   local all_fields = {}
+  all_fields["CURDIR"] = curdir
   local pending_count = 0
 
   local function on_complete()
@@ -234,6 +244,8 @@ local function replace_patterns(text, all_fields)
 end
 
 local function run_command(command)
+  print(command)
+
   -- Open a pipe to the command and get the handle
   local handle = io.popen(command .. " 2>&1") -- Capture both stdout and stderr
 
@@ -266,8 +278,6 @@ function call_curl(fields, all_fields)
   -- Replace the placeholders with actual values
   local url = fields.url.val.val
   local headers = fields.headers.val.val
-  local body
-  if fields.body then local body = fields.body.val.val end
 
   local header_lines = {}
   for line in headers:gmatch "[^\n]+" do
@@ -280,10 +290,11 @@ function call_curl(fields, all_fields)
   -- Construct the curl command
   local method = fields.method.val.val:upper() -- Ensure method is uppercase (GET, POST, etc.)
   local curl_command = "curl -s -i -X " .. method .. " '" .. url .. "' " .. headers_command
-  if body then curl_command = curl_command .. " -d '" .. body .. "'" end
 
-  -- Print the final curl command (for debugging)
-  print("Executing curl command: " .. curl_command)
+  if fields.body then
+    local body = fields.body.val.val
+    if body then curl_command = curl_command .. " -d '" .. body .. "'" end
+  end
 
   -- Return the result of the curl command
   local output, err = run_command(curl_command)
@@ -295,6 +306,32 @@ function call_curl(fields, all_fields)
   local rs_headers, rs_body = output:match "([^\n]*\n\n)(.*)"
   all_fields["rs_headers"] = rs_headers
   all_fields["rs_body"] = rs_body
+end
+
+local function write_to_file_in_buffer_dir(ts, filename, content)
+  local current_buf = vim.api.nvim_get_current_buf()
+  local filepath = vim.api.nvim_buf_get_name(current_buf)
+
+  if filepath == "" then
+    print "Current buffer is not associated with a file."
+    return -- Or handle this case differently (e.g., prompt for a filename)
+  end
+
+  local dir = vim.fn.fnamemodify(filepath, ":h") -- Get the directory part
+  local ts_dir = dir .. "/" .. "result" .. "/" .. ts -- Add the `ts` folder
+  local full_path = ts_dir .. "/" .. filename
+
+  -- Ensure the directory exists
+  vim.fn.mkdir(ts_dir, "p") -- "p" flag ensures parent directories are created if needed
+
+  -- Write to the file
+  local file, err = io.open(full_path, "w") -- "w" for write mode (overwrites)
+  if file then
+    file:write(content or "")
+    file:close()
+  else
+    print("Error opening file:", err)
+  end
 end
 
 -- Command to parse the buffer
@@ -314,15 +351,19 @@ function M.parse_and_select()
       if file.typ.typ == "curl" then
         call_curl(file.typ.fields, all_fields)
 
-        if file.after then
-          file.after.val = replace_patterns(file.after.val, all_fields)
-          local output, err = run_command(file.after.val)
-          if err then error(err) end
-          print(output)
-        else
-          print(all_fields["rs_headers"])
-          print(all_fields["rs_body"])
+        local ts = os.date("%Y-%m-%d %H:%M:%S", os.time())
+        if file.after and next(file.after) then
+          compute(file.after, all_fields)
+          for _, after in pairs(file.after) do
+            write_to_file_in_buffer_dir(ts, after.name, all_fields[after.name])
+            write_to_file_in_buffer_dir("latest", after.name, all_fields[after.name])
+          end
         end
+
+        write_to_file_in_buffer_dir(ts, "rs_headers", all_fields["rs_headers"])
+        write_to_file_in_buffer_dir("latest", "rs_headers", all_fields["rs_headers"])
+        write_to_file_in_buffer_dir(ts, "rs_body", all_fields["rs_body"])
+        write_to_file_in_buffer_dir("latest", "rs_body", all_fields["rs_body"])
       end
     end)
   else
@@ -332,7 +373,7 @@ end
 
 -- Setup function for the plugin
 vim.api.nvim_create_user_command(
-  "ParseMarkdown",
+  "APIMarkdownCall",
   M.parse_and_select,
   { desc = "Parse current buffer and select value" }
 )
