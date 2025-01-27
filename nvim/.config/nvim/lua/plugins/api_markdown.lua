@@ -244,8 +244,6 @@ local function replace_patterns(text, all_fields)
 end
 
 local function run_command(command)
-  print(command)
-
   -- Open a pipe to the command and get the handle
   local handle = io.popen(command .. " 2>&1") -- Capture both stdout and stderr
 
@@ -409,10 +407,44 @@ M.select_folder = function(base_folder, callback)
   }
 end
 
+M.ensure_folder_exists = function(folder) run_command("mkdir -p " .. folder) end
+-- Function to create a new note in a specific folder
+-- @param folder: The folder path to create the new note in
+M.create_new_api = function(folder)
+  vim.ui.input({ prompt = "Enter api name: " }, function(api_name)
+    if api_name then
+      local note_folder = folder .. "/" .. api_name
+
+      -- Check if the folder exists
+      M.ensure_folder_exists(note_folder)
+
+      local note_path = note_folder .. "/" .. api_name .. ".md"
+      vim.cmd("edit " .. note_path)
+
+      -- Insert text into the new note
+      local lines = {
+        "# " .. api_name,
+        "## vars",
+        "## computes",
+        "## type[TO BE DEFINED]",
+        "## after",
+      }
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    end
+  end)
+end
+
 -- Example usage: First select a folder in "notes/apis_new" and then select a file within that folder
 M.open_notes_folder = function()
   M.select_folder("~/notes/apis_new", M.open_telescope_in_folder) -- Call the function to select a folder within the base path
 end
+
+-- Function to select a folder and then create a new note in that folder
+M.create_api_in_selected_folder = function() M.select_folder("~/notes/apis_new", M.create_new_api) end
+
+-- Create a Neovim command to create a new note in a selected folder
+-- This allows the user to run :CreateNote in Neovim to trigger the function
+vim.api.nvim_create_user_command("APIMarkdownCreate", M.create_api_in_selected_folder, {})
 
 -- Create a Neovim command to open the api folder
 -- This allows the user to run :OpenNotes in Neovim to trigger the function
