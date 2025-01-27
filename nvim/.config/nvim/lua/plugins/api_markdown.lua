@@ -196,8 +196,7 @@ local function select_from_array(name, array, callback)
   end)
 end
 
--- Select all fields from the vars table
-local function select_all_fields(vars, callback)
+local function set_curdir(all_fields)
   local current_buf = vim.api.nvim_get_current_buf()
   local filepath = vim.api.nvim_buf_get_name(current_buf)
 
@@ -207,8 +206,14 @@ local function select_all_fields(vars, callback)
   end
 
   local curdir = vim.fn.fnamemodify(filepath, ":h") -- Get the directory part
-  local all_fields = {}
   all_fields["CURDIR"] = curdir
+  all_fields["CURFILE"] = vim.fn.fnamemodify(filepath, ":t:r") -- Get the filename part
+end
+
+-- Select all fields from the vars table
+local function select_all_fields(vars, callback)
+  local all_fields = {}
+  set_curdir(all_fields)
   local pending_count = 0
 
   local function on_complete()
@@ -225,6 +230,9 @@ local function select_all_fields(vars, callback)
         all_fields[name] = trim_last_newline(choice)
         on_complete()
       end)
+    elseif var.typ == "text" then
+      -- Directly set the value if the type is "text"
+      all_fields[name] = var.vals[1].val
     elseif var.typ == "input" then
       -- Open an input box if the type is "input"
       vim.ui.input({ prompt = "Enter value for " .. name }, function(input) all_fields[name] = input end)
@@ -238,12 +246,27 @@ end
 local function replace_patterns(text, all_fields)
   -- Function to replace {{variable name}} patterns with values from all_fields
   for variable_name, value in pairs(all_fields) do
+    value = string.gsub(value, "%s+", "")
+    value = value:gsub("%%", "%%%%")
+    value = value:gsub("%%0A", "")
+    -- print("variable_name:", variable_name, "value:", value)
     text = text:gsub("{{" .. variable_name .. "}}", value)
   end
   return text
 end
 
+local function escape_query(query)
+  -- This function URL-encodes the query string but skips certain characters like '&'
+  local function urlencode(str)
+    return (string.gsub(str, "([^%w _%%%-%.~&=])", function(c) return string.format("%%%02X", string.byte(c)) end))
+  end
+
+  -- Escape the query string, preserving '&' and '='
+  return urlencode(query)
+end
+
 local function run_command(command)
+  print("command:", command)
   -- Open a pipe to the command and get the handle
   local handle = io.popen(command .. " 2>&1") -- Capture both stdout and stderr
 
@@ -255,14 +278,14 @@ local function run_command(command)
   -- Close the handle
   handle:close()
 
-  return result
+  return result:gsub("\n$", ""), nil
 end
 
 local function compute(comps, all_fields)
   for _, comp in ipairs(comps) do
     if comp.val then
       local val = replace_patterns(comp.val.val, all_fields) -- Replace the patterns
-      if comp.val.typ == "sh" then
+      if comp.val.typ == "sh" or not comp.val.typ then
         local output, err = run_command(val)
         if err then error(err) end
         all_fields[comp.name] = trim_last_newline(output)
@@ -277,6 +300,13 @@ function call_curl(fields, all_fields)
   local url = fields.url.val.val
   local headers = fields.headers.val.val
 
+  local base_url = url:match "^(.-)?"
+  local query_params = url:match("?.*$"):sub(2)
+  local escaped_query = escape_query(query_params)
+
+  -- Reassemble the full URL
+  local escaped_url = base_url .. "?" .. escaped_query
+
   local header_lines = {}
   for line in headers:gmatch "[^\n]+" do
     table.insert(header_lines, "-H '" .. line .. "'")
@@ -287,7 +317,7 @@ function call_curl(fields, all_fields)
 
   -- Construct the curl command
   local method = fields.method.val.val:upper() -- Ensure method is uppercase (GET, POST, etc.)
-  local curl_command = "curl -s -i -X " .. method .. " '" .. url .. "' " .. headers_command
+  local curl_command = "curl -s -i -X " .. method .. " '" .. escaped_url .. "' " .. headers_command
 
   if fields.body then
     local body = fields.body.val.val
@@ -297,7 +327,6 @@ function call_curl(fields, all_fields)
   -- Return the result of the curl command
   local output, err = run_command(curl_command)
   if err then error(err) end
-
   output = string.gsub(output, "\r", "")
 
   -- Split the string only the first time \n\n appears
@@ -332,40 +361,39 @@ local function write_to_file_in_buffer_dir(ts, filename, content)
   end
 end
 
+local function proceed(file, all_fields)
+  if file.comps and next(file.comps) then compute(file.comps, all_fields) end
+
+  for _, comp in pairs(file.typ.fields) do
+    if comp.val then
+      comp.val.val = replace_patterns(comp.val.val, all_fields) -- Replace the patterns
+    end
+  end
+
+  if file.typ.typ == "curl" then
+    call_curl(file.typ.fields, all_fields)
+
+    write_to_file_in_buffer_dir(all_fields["CURFILE"], "rs_headers", all_fields["rs_headers"])
+    write_to_file_in_buffer_dir(all_fields["CURFILE"], "rs_body", all_fields["rs_body"])
+    if file.after and next(file.after) then
+      compute(file.after, all_fields)
+      for _, after in pairs(file.after) do
+        write_to_file_in_buffer_dir(all_fields["CURFILE"], after.name, all_fields[after.name])
+      end
+    end
+  end
+end
+
 -- Command to parse the buffer
 function M.parse_and_select()
   local file = parse_buffer()
 
   if file.vars and next(file.vars) then
-    select_all_fields(file.vars, function(all_fields)
-      if file.comps and next(file.comps) then compute(file.comps, all_fields) end
-
-      for _, comp in pairs(file.typ.fields) do
-        if comp.val then
-          comp.val.val = replace_patterns(comp.val.val, all_fields) -- Replace the patterns
-        end
-      end
-
-      if file.typ.typ == "curl" then
-        call_curl(file.typ.fields, all_fields)
-
-        local ts = os.date("%Y-%m-%d %H:%M:%S", os.time())
-        if file.after and next(file.after) then
-          compute(file.after, all_fields)
-          for _, after in pairs(file.after) do
-            write_to_file_in_buffer_dir(ts, after.name, all_fields[after.name])
-            write_to_file_in_buffer_dir("latest", after.name, all_fields[after.name])
-          end
-        end
-
-        write_to_file_in_buffer_dir(ts, "rs_headers", all_fields["rs_headers"])
-        write_to_file_in_buffer_dir("latest", "rs_headers", all_fields["rs_headers"])
-        write_to_file_in_buffer_dir(ts, "rs_body", all_fields["rs_body"])
-        write_to_file_in_buffer_dir("latest", "rs_body", all_fields["rs_body"])
-      end
-    end)
+    select_all_fields(file.vars, function(all_fields) proceed(file, all_fields) end)
   else
-    print "No variables found in the buffer."
+    local all_fields = {}
+    set_curdir(all_fields)
+    proceed(file, all_fields)
   end
 end
 
