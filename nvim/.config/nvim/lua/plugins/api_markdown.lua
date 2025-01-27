@@ -378,4 +378,43 @@ vim.api.nvim_create_user_command(
   { desc = "Parse current buffer and select value" }
 )
 
+-- Function to open Telescope in a specific folder
+-- @param folder: The folder path to open in Telescope
+M.open_telescope_in_folder = function(folder)
+  require("telescope.builtin").find_files {
+    prompt_title = "Find Files in " .. folder, -- Set the prompt title to indicate the folder
+    cwd = folder, -- Set the current working directory to the specified folder
+    filetypes = { "md" }, -- Only show markdown files
+    find_command = { "find", ".", "-type", "f", "-name", "*.md" },
+  }
+end
+
+-- Function to list folders in a specific directory using Telescope
+-- @param base_folder: The base directory to list folders from
+M.select_folder = function(base_folder, callback)
+  require("telescope.builtin").find_files {
+    prompt_title = "Select Folder in " .. base_folder,
+    cwd = base_folder,
+    find_command = { "find", ".", "-type", "d", "-mindepth", "1", "-maxdepth", "1" }, -- Exclude the base directory itself
+    attach_mappings = function(_, map)
+      map("i", "<CR>", function(prompt_bufnr)
+        local action_state = require "telescope.actions.state"
+        local actions = require "telescope.actions"
+        local selected = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        callback(base_folder .. "/" .. selected.value)
+      end)
+      return true
+    end,
+  }
+end
+
+-- Example usage: First select a folder in "notes/apis_new" and then select a file within that folder
+M.open_notes_folder = function()
+  M.select_folder("~/notes/apis_new", M.open_telescope_in_folder) -- Call the function to select a folder within the base path
+end
+
+-- Create a Neovim command to open the api folder
+-- This allows the user to run :OpenNotes in Neovim to trigger the function
+vim.api.nvim_create_user_command("APIMarkdownOpen", M.open_notes_folder, {})
 return M
