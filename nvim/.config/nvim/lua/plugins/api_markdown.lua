@@ -299,13 +299,26 @@ function call_curl(fields, all_fields)
   -- Replace the placeholders with actual values
   local url = fields.url.val.val
   local headers = fields.headers.val.val
+  local base_url, query_params
 
-  local base_url = url:match "^(.-)?"
-  local query_params = url:match("?.*$"):sub(2)
-  local escaped_query = escape_query(query_params)
+  -- Check if the URL has a query part
+  if url:find "?" then
+    -- Extract the base URL (everything before the '?')
+    base_url = url:match "^(.-)?"
 
-  -- Reassemble the full URL
-  local escaped_url = base_url .. "?" .. escaped_query
+    -- Extract the query parameters (everything after the '?')
+    query_params = url:match("?.*$"):sub(2) -- Remove the '?' from the query part
+
+    -- Escape the query parameters
+    query_params = escape_query(query_params)
+  else
+    -- No query parameters, just use the full URL
+    base_url = url
+    query_params = ""
+  end
+
+  -- Reassemble the full URL (no query part if there were none)
+  local escaped_url = base_url .. (query_params ~= "" and "?" .. query_params or "")
 
   local header_lines = {}
   for line in headers:gmatch "[^\n]+" do
